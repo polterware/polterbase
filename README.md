@@ -21,6 +21,7 @@ Polterbase is a productivity layer on top of the official `supabase` CLI. Instea
 - **Built-in Self-Update**: Update Polterbase for the current repository or globally through npm
 - **Shell Execution**: Resolves `supabase` from the current repository first, then falls back to `PATH`
 - **TypeScript-based CLI**: Strongly typed internal implementation
+- **App Workflows**: Explicit `polterbase app ...` flows for repository-aware setup, linking, migrations, runtime configuration, and app installation
 
 ---
 
@@ -101,6 +102,37 @@ Install Supabase CLI (official docs):
 ---
 
 ## Quick Reference
+
+### App Workflows
+
+Polterbase keeps generic Supabase execution separate from app-specific automation.
+Use the `app` namespace when you want project-aware workflows:
+
+```bash
+polterbase app setup uru --path .
+```
+
+```bash
+polterbase app link uru --path .
+```
+
+```bash
+polterbase app migrate uru push --path .
+```
+
+```bash
+polterbase app configure uru --path .
+```
+
+```bash
+polterbase app install uru --platform macos --artifact-url <url>
+```
+
+`setup uru` installs dependencies, collects Supabase connection data, links the project, pushes migrations, and writes the runtime bootstrap payload used by the desktop app.
+
+`configure uru` refreshes the runtime connection payload without reinstalling the app.
+
+`install uru` is currently macOS-only and requires an artifact URL passed through `--artifact-url` or the `POLTERBASE_URU_MACOS_ARTIFACT_URL` environment variable.
 
 ### Execution Model
 
@@ -219,6 +251,18 @@ Pins are persisted locally using OS-level app config storage.
 ---
 
 ## Usage Examples
+
+### Bootstrap Uru from source
+
+```bash
+polterbase app setup uru --path /absolute/path/to/uru
+```
+
+### Reconfigure an installed Uru app
+
+```bash
+polterbase app configure uru
+```
 
 ### Check Supabase CLI version
 
