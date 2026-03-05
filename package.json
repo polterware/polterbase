@@ -1,24 +1,15 @@
 {
-  "name": "@polterware/polterbase",
+  "name": "polterbase",
   "version": "0.1.1",
-  "description": "Core package for the Polterware ecosystem, with shared utilities and CLI foundations.",
+  "description": "A global CLI for managing Supabase CLI workflows.",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "bin": {
     "polterbase": "./dist/index.js"
   },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    }
-  },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "repository": {
     "type": "git",
@@ -31,6 +22,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "preferGlobal": true,
   "scripts": {
     "dev": "tsup src/index.ts --watch --format esm --dts",
     "build": "tsup src/index.ts --format esm --clean",
@@ -41,7 +33,6 @@
   "keywords": [
     "polterware",
     "polterbase",
-    "sdk",
     "cli",
     "typescript"
   ],

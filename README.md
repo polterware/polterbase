@@ -1,29 +1,283 @@
 # polterbase
 
-A core package for the Polterware ecosystem.
+[![npm version](https://img.shields.io/npm/v/polterbase.svg)](https://www.npmjs.com/package/polterbase)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+
+An optimized interactive CLI for managing Supabase CLI workflows with more speed, consistency, and discoverability.
+
+Polterbase is a productivity layer on top of the official `supabase` CLI. Instead of memorizing command trees, you choose categories, build commands interactively, attach global flags, and pin common workflows for one-click reuse.
 
 ## Features
 
-- Lightweight and fast
-- TypeScript support out of the box
-- ESM and CommonJS exports
-- Comprehensive testing with Vitest
+- **Interactive Command Builder**: Guided flow for command + subcommand + extra args
+- **Supabase Command Discovery**: Organized by practical categories
+- **Global Flags Picker**: Add common global flags in one step
+- **Pinned Commands**: Save successful command combinations for faster repetition
+- **Custom Command Mode**: Run raw Supabase arguments like `-v` or `status -o json`
+- **Shell Execution**: Executes your local `supabase` binary directly
+- **TypeScript-based CLI**: Strongly typed internal implementation
+
+---
 
 ## Installation
 
+### Run without installing globally
+
 ```bash
-npm install polterbase
+npx polterbase
 ```
 
-## Usage
+### Install globally
 
-```typescript
-import { hello } from 'polterbase';
-
-console.log(hello('User'));
-// Output: Hello, User! Welcome to Polterbase.
+```bash
+npm install -g polterbase
 ```
+
+Then run:
+
+```bash
+polterbase
+```
+
+`polterbase` is a global CLI tool. Do not add it to `dependencies` or `devDependencies` of app projects.
+
+---
+
+## Requirements
+
+- **Node.js**: `>= 18`
+- **Supabase CLI**: installed and available in `PATH`
+
+Check your environment:
+
+```bash
+node -v
+supabase --version
+```
+
+Install Supabase CLI (official docs):
+
+- [Supabase CLI Guide](https://supabase.com/docs/guides/cli)
+
+---
+
+## Quick Reference
+
+### Execution Model
+
+Polterbase always executes commands as:
+
+```bash
+supabase <command> <extra-args> <global-flags>
+```
+
+### Typical Flow
+
+1. Choose a category
+2. Choose a base command
+3. Add optional extra args
+4. Pick optional global flags
+5. Confirm and execute
+6. Optionally pin command after success
+
+---
+
+## Command Categories
+
+### Quick Start
+
+- `bootstrap` - Bootstrap a Supabase project from a starter template
+
+### Local Development
+
+- `db` - Manage Postgres databases
+- `gen` - Run code generation tools
+- `init` - Initialize a local project
+- `inspect` - Inspect Supabase project resources
+- `link` - Link local project to remote Supabase project
+- `login` - Authenticate with Supabase access token
+- `logout` - Remove local auth token
+- `migration` - Manage migration scripts
+- `seed` - Seed project from `supabase/config.toml`
+- `services` - Show local service versions
+- `start` - Start local Supabase containers
+- `status` - Show local container status
+- `stop` - Stop local Supabase containers
+- `test` - Run tests against local stack
+- `unlink` - Unlink local project
+
+### Management APIs
+
+- `backups`
+- `branches`
+- `config`
+- `domains`
+- `encryption`
+- `functions`
+- `network-bans`
+- `network-restrictions`
+- `orgs`
+- `postgres-config`
+- `projects`
+- `secrets`
+- `snippets`
+- `ssl-enforcement`
+- `sso`
+- `storage`
+- `vanity-subdomains`
+
+### Additional Commands
+
+- `completion` - Generate shell completion script
+- `help` - Show Supabase command help
+
+### Custom Command / Check Version
+
+Use this mode for free-form args like:
+
+- `-v`
+- `status -o json`
+- `db pull`
+- `projects list`
+
+---
+
+## Global Flags
+
+Available global flags in the interactive selector:
+
+- `--create-ticket` - Create support ticket on error
+- `--debug` - Enable debug logs
+- `--experimental` - Enable experimental features
+- `--yes` - Auto-confirm prompts
+
+---
+
+## Pinned Commands
+
+After a successful execution, Polterbase can pin the command for quick reuse.
+
+Pinned items appear at the top of the main menu and can be removed via:
+
+- `Manage Pinned Commands`
+
+Pins are persisted locally using OS-level app config storage.
+
+---
+
+## Usage Examples
+
+### Check Supabase CLI version
+
+Interactive path:
+
+1. `Custom Command / Check Version`
+2. Input: `-v`
+
+Executed command:
+
+```bash
+supabase -v
+```
+
+### Start local stack with debug
+
+Interactive path:
+
+1. `Local Development`
+2. Command: `start`
+3. Extra args: none
+4. Flags: `--debug`
+
+Executed command:
+
+```bash
+supabase start --debug
+```
+
+### List projects
+
+Interactive path:
+
+1. `Management APIs`
+2. Command: `projects`
+3. Extra args: `list`
+
+Executed command:
+
+```bash
+supabase projects list
+```
+
+### Run DB pull and auto-confirm prompts
+
+Interactive path:
+
+1. `Local Development`
+2. Command: `db`
+3. Extra args: `pull`
+4. Flags: `--yes`
+
+Executed command:
+
+```bash
+supabase db pull --yes
+```
+
+---
+
+## Troubleshooting
+
+### `supabase: command not found`
+
+Supabase CLI is not installed or not in your `PATH`.
+
+Fix:
+
+1. Install Supabase CLI
+2. Restart terminal
+3. Run `supabase --version`
+
+### Command exits with non-zero code
+
+Polterbase forwards execution to Supabase CLI. Use `--debug` and re-run to inspect detailed logs.
+
+### Pinned commands are missing
+
+Pins are only suggested after successful runs. Confirm the pin prompt after a successful command.
+
+### Interactive prompt did not open correctly
+
+Ensure you are running in a terminal that supports interactive TTY prompts.
+
+---
+
+## Security Notes
+
+- Polterbase executes local shell commands through your installed Supabase CLI.
+- Keep Supabase tokens out of shared shells and CI logs.
+- Prefer short-lived tokens and least-privileged project access.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit changes with clear messages
+4. Open a pull request
+
+Repository:
+
+- [polterware/polterbase](https://github.com/polterware/polterbase)
+
+---
 
 ## License
 
-MIT
+MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Author
+
+[Polterware](https://www.polterware.com)
