@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { inkColors, symbols } from "../theme.js";
 import type { SidebarItem } from "../hooks/useSidebarItems.js";
@@ -20,9 +20,18 @@ export function Sidebar({
   onSelect,
   onHighlight,
 }: SidebarProps): React.ReactElement {
-  const selectableItems = items.filter((item) => item.type !== "separator");
+  const selectableItems = useMemo(
+    () => items.filter((item) => item.type !== "separator"),
+    [items],
+  );
   const selectedIdx = selectableItems.findIndex((item) => item.id === selectedId);
   const [cursorIdx, setCursorIdx] = useState(Math.max(0, selectedIdx));
+
+  // Sync cursor when selectedId changes externally
+  useEffect(() => {
+    const idx = selectableItems.findIndex((item) => item.id === selectedId);
+    if (idx >= 0) setCursorIdx(idx);
+  }, [selectedId, selectableItems]);
 
   useInput(
     (input, key) => {
@@ -51,9 +60,6 @@ export function Sidebar({
     },
     { isActive: isFocused },
   );
-
-  // Sync cursor when selected changes externally
-  const currentSelectedIdx = selectableItems.findIndex((item) => item.id === selectedId);
 
   let selectableIdx = 0;
   return (

@@ -4,6 +4,7 @@ import type { NavigationParams } from "./useNavigation.js";
 
 export type PanelView =
   | "feature"
+  | "pinned"
   | "pipelines"
   | "tool-status"
   | "config"
@@ -45,6 +46,7 @@ export function usePanelNavigation() {
     }
 
     const viewMap: Record<string, PanelView> = {
+      pinned: "pinned",
       "custom-command": "custom-command",
       pipelines: "pipelines",
       "tool-status": "tool-status",

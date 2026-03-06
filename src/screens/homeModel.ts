@@ -7,21 +7,86 @@ interface BuildHomeItemsParams {
   activeFeature: Feature;
   pinnedCommands: string[];
   pinnedRuns: string[];
+  showPinnedSection?: boolean;
 }
 
 export function getFeatures(): Feature[] {
   return features;
 }
 
+export function buildPinnedOnlyItems(
+  pinnedCommands: string[],
+  pinnedRuns: string[],
+): SelectItem[] {
+  const items: SelectItem[] = [];
+
+  if (pinnedCommands.length > 0) {
+    items.push({
+      id: "pinned-commands-header",
+      value: "__pinned_commands_header__",
+      label: "📌 Commands",
+      kind: "header",
+      selectable: false,
+    });
+
+    for (const command of pinnedCommands) {
+      const cmdDef = findCommandByValue(command);
+      const toolHint = cmdDef ? cmdDef.tool : "supabase";
+      const labelHint = cmdDef?.hint;
+
+      items.push({
+        id: `command:${command}`,
+        value: command,
+        label: command,
+        hint: [toolHint, labelHint].filter(Boolean).join(" · "),
+        icon: "📌",
+        kind: "command",
+        rightActionable: true,
+        section: "pinned-commands",
+      });
+    }
+  }
+
+  if (pinnedRuns.length > 0) {
+    items.push({
+      id: "pinned-runs-header",
+      value: "__pinned_runs_header__",
+      label: "▶ Pipelines",
+      kind: "header",
+      selectable: false,
+    });
+
+    for (const runCommand of pinnedRuns) {
+      const baseCommand = runCommand.split(" ").filter(Boolean)[0] ?? "";
+      const cmdDef = findCommandByValue(baseCommand);
+      const toolHint = cmdDef ? cmdDef.tool : "supabase";
+
+      items.push({
+        id: `run:${runCommand}`,
+        value: runCommand,
+        label: runCommand,
+        hint: toolHint,
+        icon: "▶",
+        kind: "run",
+        rightActionable: true,
+        section: "pinned-runs",
+      });
+    }
+  }
+
+  return items;
+}
+
 export function buildHomeItems({
   activeFeature,
   pinnedCommands,
   pinnedRuns,
+  showPinnedSection = true,
 }: BuildHomeItemsParams): SelectItem[] {
   const items: SelectItem[] = [];
 
   // Pinned section
-  if (pinnedRuns.length > 0 || pinnedCommands.length > 0) {
+  if (showPinnedSection && (pinnedRuns.length > 0 || pinnedCommands.length > 0)) {
     items.push({
       id: "section-pinned",
       value: "__section_pinned__",
@@ -30,59 +95,7 @@ export function buildHomeItems({
       selectable: false,
     });
 
-    if (pinnedCommands.length > 0) {
-      items.push({
-        id: "pinned-commands-header",
-        value: "__pinned_commands_header__",
-        label: "📌 Commands",
-        kind: "header",
-        selectable: false,
-      });
-
-      for (const command of pinnedCommands) {
-        const cmdDef = findCommandByValue(command);
-        const toolHint = cmdDef ? cmdDef.tool : "supabase";
-        const labelHint = cmdDef?.hint;
-
-        items.push({
-          id: `command:${command}`,
-          value: command,
-          label: command,
-          hint: [toolHint, labelHint].filter(Boolean).join(" · "),
-          icon: "📌",
-          kind: "command",
-          rightActionable: true,
-          section: "pinned-commands",
-        });
-      }
-    }
-
-    if (pinnedRuns.length > 0) {
-      items.push({
-        id: "pinned-runs-header",
-        value: "__pinned_runs_header__",
-        label: "▶ Pipelines",
-        kind: "header",
-        selectable: false,
-      });
-
-      for (const runCommand of pinnedRuns) {
-        const baseCommand = runCommand.split(" ").filter(Boolean)[0] ?? "";
-        const cmdDef = findCommandByValue(baseCommand);
-        const toolHint = cmdDef ? cmdDef.tool : "supabase";
-
-        items.push({
-          id: `run:${runCommand}`,
-          value: runCommand,
-          label: runCommand,
-          hint: toolHint,
-          icon: "▶",
-          kind: "run",
-          rightActionable: true,
-          section: "pinned-runs",
-        });
-      }
-    }
+    items.push(...buildPinnedOnlyItems(pinnedCommands, pinnedRuns));
   }
 
   // Commands for active feature, grouped by tool

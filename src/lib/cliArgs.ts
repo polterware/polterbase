@@ -1,6 +1,8 @@
 import type { AppAction, MigrationAction, ParsedCliOptions } from "../apps/types.js";
 
-export type CliMode = "interactive" | "app" | "help" | "pipeline-run" | "config" | "plan" | "apply" | "status";
+export type CliMode = "interactive" | "app" | "help" | "pipeline-run" | "config" | "plan" | "apply" | "status" | "mcp-install";
+
+export type McpScope = "project" | "user" | "local";
 
 export interface ParsedCliCommand {
   mode: CliMode;
@@ -8,6 +10,7 @@ export interface ParsedCliCommand {
   pipelineName?: string;
   configEdit?: boolean;
   classic?: boolean;
+  mcpScope?: McpScope;
 }
 
 function takeValue(
@@ -48,6 +51,13 @@ export function parseCliArgs(argv: string[]): ParsedCliCommand {
   // New subcommands
   if (argv_[0] === "pipeline" && argv_[1] === "run" && argv_[2]) {
     return { mode: "pipeline-run", options: {}, pipelineName: argv_[2] };
+  }
+
+  if (argv_[0] === "mcp" && argv_[1] === "install") {
+    let mcpScope: McpScope = "local";
+    if (argv_.includes("--project")) mcpScope = "project";
+    else if (argv_.includes("--global")) mcpScope = "user";
+    return { mode: "mcp-install", options: {}, mcpScope };
   }
 
   if (argv_[0] === "config") {
@@ -151,6 +161,9 @@ export function printCliHelp(): void {
       "  polter plan                      Show declarative state diff",
       "  polter apply                     Apply declarative state changes",
       "  polter status                    Show current tool status",
+      "  polter mcp install               Install Polter MCP server into Claude Code (local scope)",
+      "  polter mcp install --project     Install for this project only (shared via repo)",
+      "  polter mcp install --global      Install globally for all projects",
       "",
       "  polter app setup ops [--path <dir>] [--create-project|--use-existing-project] [--yes]",
       "  polter app link ops [--path <dir>] [--relink]",

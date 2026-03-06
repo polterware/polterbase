@@ -8,9 +8,14 @@ export interface SidebarItem {
   type: "feature" | "action" | "separator";
 }
 
-export function useSidebarItems(): SidebarItem[] {
+export function useSidebarItems(hasPins = false): SidebarItem[] {
   return useMemo(() => {
     const items: SidebarItem[] = [];
+
+    if (hasPins) {
+      items.push({ id: "pinned", label: "Pinned", icon: "📌", type: "action" });
+      items.push({ id: "__sep_pinned__", label: "---", icon: "", type: "separator" });
+    }
 
     for (const feature of features) {
       items.push({
@@ -31,5 +36,5 @@ export function useSidebarItems(): SidebarItem[] {
     items.push({ id: "exit", label: "Exit", icon: "🚪", type: "action" });
 
     return items;
-  }, []);
+  }, [hasPins]);
 }

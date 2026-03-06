@@ -13,6 +13,8 @@ import { GhostBanner } from "./components/GhostBanner.js";
 import { PanelFooter, type KeyHint } from "./components/PanelFooter.js";
 import { Modal } from "./components/Modal.js";
 import { FeatureCommands } from "./components/FeatureCommands.js";
+import { PinnedCommands } from "./components/PinnedCommands.js";
+import { getPinnedCommands, getPinnedRuns } from "./data/pins.js";
 import { CommandArgs } from "./screens/CommandArgs.js";
 import { CustomCommand } from "./screens/CustomCommand.js";
 import { FlagSelection } from "./screens/FlagSelection.js";
@@ -26,14 +28,35 @@ import { PipelineExecution } from "./screens/PipelineExecution.js";
 import { getFeatureById } from "./data/features.js";
 import { colors } from "./theme.js";
 
+const FOOTER_HINTS: KeyHint[] = [
+  { key: "←→", action: "panels" },
+  { key: "j/k", action: "nav" },
+  { key: "Enter", action: "select" },
+  { key: "Esc", action: "back" },
+  { key: "q", action: "quit" },
+  { key: "p", action: "pin" },
+  { key: "?", action: "help" },
+];
+
 export function AppPanel(): React.ReactElement {
   useFullscreen();
   const { width, height } = useTerminalDimensions();
   const { exit } = useApp();
   const nav = usePanelNavigation();
   const focus = usePanelFocus();
-  const sidebarItems = useSidebarItems();
+  const [hasPins, setHasPins] = React.useState(
+    () => getPinnedCommands().length > 0 || getPinnedRuns().length > 0,
+  );
+  const sidebarItems = useSidebarItems(hasPins);
   const modal = useModal();
+
+  const refreshPins = React.useCallback(() => {
+    const newHasPins = getPinnedCommands().length > 0 || getPinnedRuns().length > 0;
+    setHasPins(newHasPins);
+    if (!newHasPins && nav.view === "pinned") {
+      nav.selectSidebarItem("database");
+    }
+  }, [nav.view, nav.selectSidebarItem]);
 
   const singlePanel = width < 60 || height < 15;
 
@@ -101,6 +124,7 @@ export function AppPanel(): React.ReactElement {
   const activeSidebarId = (() => {
     switch (nav.view) {
       case "feature": return nav.featureId;
+      case "pinned": return "pinned";
       case "custom-command": return "custom-command";
       case "pipelines": return "pipelines";
       case "tool-status": return "tool-status";
@@ -127,15 +151,7 @@ export function AppPanel(): React.ReactElement {
   // Banner height estimate (ghost art is 8 lines, narrow mode is 1 line)
   const bannerHeight = width < 60 ? 1 : 8;
 
-  // Build footer hints
-  const footerHints: KeyHint[] = [
-    { key: "←→", action: "panels" },
-    { key: "j/k", action: "nav" },
-    { key: "Enter", action: "select" },
-    { key: "Esc", action: "back" },
-    { key: "q", action: "quit" },
-    { key: "?", action: "help" },
-  ];
+  const footerHints = FOOTER_HINTS;
 
   // Render main panel content
   const mainContentHeight = Math.max(5, height - bannerHeight - 1 - 2); // borders take 2
@@ -151,6 +167,18 @@ export function AppPanel(): React.ReactElement {
 
     // Default view based on sidebar selection
     switch (nav.view) {
+      case "pinned":
+        return (
+          <PinnedCommands
+            onNavigate={nav.navigateInner}
+            onBack={focus.focusSidebar}
+            onPinsChanged={refreshPins}
+            width={mainContentWidth - 2}
+            height={mainContentHeight}
+            isInputActive={focus.isMainFocused}
+          />
+        );
+
       case "feature": {
         const feature = getFeatureById(nav.featureId);
         if (!feature) {
@@ -162,6 +190,7 @@ export function AppPanel(): React.ReactElement {
             onNavigate={nav.navigateInner}
             onExit={handleExit}
             onBack={focus.focusSidebar}
+            onPinsChanged={refreshPins}
             width={mainContentWidth - 2}
             height={mainContentHeight}
             isInputActive={focus.isMainFocused}
@@ -387,7 +416,7 @@ export function AppPanel(): React.ReactElement {
   const main = (
     <Panel
       id="main"
-      title={nav.view === "feature" ? getFeatureById(nav.featureId)?.label : nav.view}
+      title={nav.view === "feature" ? getFeatureById(nav.featureId)?.label : nav.view === "pinned" ? "Pinned" : nav.view}
       width={mainContentWidth}
       height={Math.max(5, height - bannerHeight - 1)}
       focused={focus.isMainFocused}

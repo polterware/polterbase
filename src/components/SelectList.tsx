@@ -128,94 +128,88 @@ export function SelectList({
     }
   }, { isActive: isInputActive });
 
-  const getWindowStart = (): number => {
-    if (items.length <= maxVisible) {
-      return 0;
-    }
+  const { windowStart, windowEnd, visibleItems, boxedLayout } = useMemo(() => {
+    // getWindowStart
+    let windowStartVal = 0;
+    if (items.length > maxVisible) {
+      const safeSelectedIndex = selectedItemIndex >= 0 ? selectedItemIndex : 0;
+      windowStartVal = Math.max(
+        0,
+        Math.min(
+          safeSelectedIndex - Math.floor(maxVisible / 2),
+          items.length - maxVisible,
+        ),
+      );
 
-    const safeSelectedIndex = selectedItemIndex >= 0 ? selectedItemIndex : 0;
-    let start = Math.max(
-      0,
-      Math.min(
-        safeSelectedIndex - Math.floor(maxVisible / 2),
-        items.length - maxVisible,
-      ),
-    );
+      const firstVisible = items[windowStartVal];
+      if (windowStartVal > 0 && firstVisible && !isHeader(firstVisible)) {
+        let previousHeaderIndex = -1;
+        for (let i = windowStartVal - 1; i >= 0; i--) {
+          if (isHeader(items[i]!)) {
+            previousHeaderIndex = i;
+            break;
+          }
+        }
 
-    const firstVisible = items[start];
-    if (start > 0 && firstVisible && !isHeader(firstVisible)) {
-      let previousHeaderIndex = -1;
-      for (let i = start - 1; i >= 0; i--) {
-        if (isHeader(items[i]!)) {
-          previousHeaderIndex = i;
-          break;
+        if (
+          previousHeaderIndex >= 0 &&
+          safeSelectedIndex - previousHeaderIndex < maxVisible
+        ) {
+          windowStartVal = previousHeaderIndex;
         }
       }
-
-      if (
-        previousHeaderIndex >= 0 &&
-        safeSelectedIndex - previousHeaderIndex < maxVisible
-      ) {
-        start = previousHeaderIndex;
-      }
     }
 
-    return start;
-  };
-
-  const getWindowRange = (): [number, number] => {
-    const initialStart = getWindowStart();
-    const initialEnd = Math.min(initialStart + maxVisible, items.length);
-
-    if (!boxedSections) {
-      return [initialStart, initialEnd];
-    }
-
-    let start = initialStart;
+    // getWindowRange
+    const initialEnd = Math.min(windowStartVal + maxVisible, items.length);
+    let start = windowStartVal;
     let end = initialEnd;
 
-    while (start < end) {
-      const sections = buildBoxedSectionLayout(items, start, end);
-      if (countBoxedSectionLines(sections) <= maxVisible) {
-        break;
-      }
+    if (boxedSections) {
+      while (start < end) {
+        const sections = buildBoxedSectionLayout(items, start, end);
+        if (countBoxedSectionLines(sections) <= maxVisible) {
+          break;
+        }
 
-      if (
-        selectedItemIndex >= 0 &&
-        start === selectedItemIndex &&
-        end === selectedItemIndex + 1
-      ) {
-        break;
-      }
+        if (
+          selectedItemIndex >= 0 &&
+          start === selectedItemIndex &&
+          end === selectedItemIndex + 1
+        ) {
+          break;
+        }
 
-      const canTrimStart = selectedItemIndex > start;
-      const canTrimEnd = selectedItemIndex < end - 1;
+        const canTrimStart = selectedItemIndex > start;
+        const canTrimEnd = selectedItemIndex < end - 1;
 
-      if (
-        canTrimEnd &&
-        (!canTrimStart ||
-          end - selectedItemIndex >= selectedItemIndex - start)
-      ) {
+        if (
+          canTrimEnd &&
+          (!canTrimStart ||
+            end - selectedItemIndex >= selectedItemIndex - start)
+        ) {
+          end -= 1;
+          continue;
+        }
+
+        if (canTrimStart) {
+          start += 1;
+          continue;
+        }
+
         end -= 1;
-        continue;
       }
-
-      if (canTrimStart) {
-        start += 1;
-        continue;
-      }
-
-      end -= 1;
     }
 
-    return [start, end];
-  };
-
-  const [windowStart, windowEnd] = getWindowRange();
-  const visibleItems = items.slice(windowStart, windowEnd);
-  const boxedLayout = boxedSections
-    ? buildBoxedSectionLayout(items, windowStart, windowEnd)
-    : [];
+    return {
+      windowStart: start,
+      windowEnd: end,
+      visibleItems: items.slice(start, end),
+      boxedLayout: boxedSections
+        ? buildBoxedSectionLayout(items, start, end)
+        : [],
+    };
+  }, [items, selectedItemIndex, maxVisible, boxedSections]);
   const showScrollUp = windowStart > 0;
   const showScrollDown = windowEnd < items.length;
 

@@ -92,6 +92,7 @@ export async function runCommand(
   execution: string | CommandExecution,
   args: string[],
   cwd: string = process.cwd(),
+  options?: { quiet?: boolean },
 ): Promise<RunResult> {
   return new Promise<RunResult>((resolve) => {
     let stdout = "";
@@ -109,13 +110,13 @@ export async function runCommand(
     child.stdout?.on("data", (data: Buffer) => {
       const text = data.toString();
       stdout += text;
-      process.stdout.write(text);
+      if (!options?.quiet) process.stdout.write(text);
     });
 
     child.stderr?.on("data", (data: Buffer) => {
       const text = data.toString();
       stderr += text;
-      process.stderr.write(text);
+      if (!options?.quiet) process.stderr.write(text);
     });
 
     child.on("error", (err: Error) => {

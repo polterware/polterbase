@@ -5,6 +5,7 @@ import { AppClassic } from "./app.js";
 import { AppPanel } from "./appPanel.js";
 import { parseCliArgs, printCliHelp } from "./lib/cliArgs.js";
 import { runAppCli } from "./apps/runAppCli.js";
+import { installMcpServer } from "./lib/mcpInstaller.js";
 import { findPipelineByName } from "./pipeline/storage.js";
 import { executePipeline } from "./pipeline/engine.js";
 import { getCommandById } from "./data/commands/index.js";
@@ -22,6 +23,11 @@ async function main() {
 
   if (parsed.mode === "help") {
     printCliHelp();
+    return;
+  }
+
+  if (parsed.mode === "mcp-install") {
+    await installMcpServer(parsed.mcpScope ?? "local");
     return;
   }
 

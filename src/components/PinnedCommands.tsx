@@ -8,15 +8,12 @@ import {
   togglePinnedCommand,
   togglePinnedRun,
 } from "../data/pins.js";
-import { buildHomeItems } from "../screens/homeModel.js";
+import { buildPinnedOnlyItems } from "../screens/homeModel.js";
 import { findCommandByValue } from "../data/commands/index.js";
-import type { Feature } from "../data/types.js";
 import type { NavigationParams, Screen } from "../hooks/useNavigation.js";
 
-interface FeatureCommandsProps {
-  feature: Feature;
+interface PinnedCommandsProps {
   onNavigate: (screen: Screen, params?: NavigationParams) => void;
-  onExit: () => void;
   onBack?: () => void;
   onPinsChanged?: () => void;
   width?: number;
@@ -24,16 +21,14 @@ interface FeatureCommandsProps {
   isInputActive?: boolean;
 }
 
-export function FeatureCommands({
-  feature,
+export function PinnedCommands({
   onNavigate,
-  onExit,
   onBack,
   onPinsChanged,
   width = 80,
   height = 24,
   isInputActive = true,
-}: FeatureCommandsProps): React.ReactElement {
+}: PinnedCommandsProps): React.ReactElement {
   const [pinnedCommands, setPinnedCommands] = useState<string[]>(() => getPinnedCommands());
   const [pinnedRuns, setPinnedRuns] = useState<string[]>(() => getPinnedRuns());
   const [pinFeedback, setPinFeedback] = useState<string>();
@@ -45,14 +40,8 @@ export function FeatureCommands({
   }, [pinFeedback]);
 
   const items = useMemo(
-    () =>
-      buildHomeItems({
-        activeFeature: feature,
-        pinnedCommands,
-        pinnedRuns,
-        showPinnedSection: false,
-      }),
-    [feature, pinnedCommands, pinnedRuns],
+    () => buildPinnedOnlyItems(pinnedCommands, pinnedRuns),
+    [pinnedCommands, pinnedRuns],
   );
 
   const pinnedCommandSet = useMemo(() => new Set(pinnedCommands), [pinnedCommands]);
@@ -88,10 +77,7 @@ export function FeatureCommands({
         const tool = cmdDef?.tool ?? "supabase";
         onNavigate("confirm-execute", { args, tool });
       }
-      return;
     }
-
-    // Actions are handled via sidebar in panel mode
   };
 
   const handleRightAction = (item: SelectItem) => {
@@ -119,11 +105,26 @@ export function FeatureCommands({
     }
   };
 
+  if (items.length === 0) {
+    return (
+      <Box flexDirection="column" paddingX={1}>
+        <Box marginBottom={1}>
+          <Text color={inkColors.accent} bold>
+            📌 Pinned
+          </Text>
+        </Box>
+        <Text color="gray">
+          No pinned items. Press p on any command to pin it.
+        </Text>
+      </Box>
+    );
+  }
+
   return (
     <Box flexDirection="column" paddingX={1}>
       <Box marginBottom={1}>
         <Text color={inkColors.accent} bold>
-          {feature.icon} {feature.label}
+          📌 Pinned
         </Text>
       </Box>
 

@@ -12,6 +12,9 @@ export const allCommands: CommandDef[] = [
 ];
 
 const commandById = new Map(allCommands.map((cmd) => [cmd.id, cmd]));
+const commandByValue = new Map<string, CommandDef>(
+  allCommands.map((cmd) => [getCommandValue(cmd), cmd]),
+);
 
 export function getCommandById(id: string): CommandDef | undefined {
   return commandById.get(id);
@@ -37,19 +40,7 @@ export function getCommandValue(cmd: CommandDef): string {
  * Find a command def by its legacy value (e.g. "db" or "gh:pr create").
  */
 export function findCommandByValue(value: string): CommandDef | undefined {
-  // Try direct ID match first
   const byId = commandById.get(value);
   if (byId) return byId;
-
-  // Try tool:base format
-  if (value.includes(":")) {
-    const [tool, ...rest] = value.split(":");
-    const basePart = rest.join(":");
-    return allCommands.find(
-      (cmd) => cmd.tool === tool && cmd.base.join(" ") === basePart,
-    );
-  }
-
-  // Legacy supabase-only format (just the base command)
-  return supabaseCommands.find((cmd) => cmd.base.join(" ") === value);
+  return commandByValue.get(value);
 }

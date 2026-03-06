@@ -8,7 +8,7 @@ interface GhostBannerProps {
   compact?: boolean;
 }
 
-function ToolStatusBadges(): React.ReactElement {
+const ToolStatusBadges = React.memo(function ToolStatusBadges(): React.ReactElement {
   const tools = (["supabase", "gh", "vercel"] as const).map(getToolInfo);
   return (
     <Box gap={1}>
@@ -23,7 +23,7 @@ function ToolStatusBadges(): React.ReactElement {
       ))}
     </Box>
   );
-}
+});
 
 export function GhostBanner({ width = 80, compact = false }: GhostBannerProps): React.ReactElement {
   if (compact) {
