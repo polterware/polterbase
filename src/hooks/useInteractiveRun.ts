@@ -1,0 +1,44 @@
+import { useCallback } from "react";
+import { useStdin } from "ink";
+import {
+  ENTER_ALT_SCREEN,
+  LEAVE_ALT_SCREEN,
+  HIDE_CURSOR,
+  SHOW_CURSOR,
+} from "./useFullscreen.js";
+import { runInteractiveCommand, type RunResult } from "../lib/runner.js";
+import { resolveToolCommand } from "../lib/toolResolver.js";
+import type { CliToolId } from "../data/types.js";
+
+export function useInteractiveRun(): {
+  runInteractive: (tool: CliToolId, args: string[], cwd?: string) => RunResult;
+} {
+  const { setRawMode } = useStdin();
+
+  const runInteractive = useCallback(
+    (tool: CliToolId, args: string[], cwd?: string) => {
+      process.stdout.write(SHOW_CURSOR + LEAVE_ALT_SCREEN);
+      setRawMode(false);
+
+      process.stdout.write(`\n  Running: ${tool} ${args.join(" ")}\n\n`);
+
+      const resolved = resolveToolCommand(tool, cwd);
+      const result = runInteractiveCommand(
+        { command: resolved.command, env: resolved.env },
+        args,
+        cwd,
+      );
+
+      process.stdout.write(
+        `\n  Command exited (code ${result.exitCode ?? "?"}). Returning to Polter...\n`,
+      );
+      setRawMode(true);
+      process.stdout.write(ENTER_ALT_SCREEN + HIDE_CURSOR);
+
+      return result;
+    },
+    [setRawMode],
+  );
+
+  return { runInteractive };
+}

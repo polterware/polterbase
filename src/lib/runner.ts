@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { delimiter, dirname, join, resolve } from "node:path";
 
@@ -137,6 +137,28 @@ export async function runCommand(
       resolve({ exitCode: code, signal, stdout, stderr });
     });
   });
+}
+
+export function runInteractiveCommand(
+  execution: string | CommandExecution,
+  args: string[],
+  cwd: string = process.cwd(),
+): RunResult {
+  const resolved =
+    typeof execution === "string" ? { command: execution } : execution;
+  const result = spawnSync(resolved.command, args, {
+    cwd,
+    env: resolved.env,
+    shell: true,
+    stdio: "inherit",
+  });
+  return {
+    exitCode: result.status,
+    signal: result.signal,
+    stdout: "",
+    stderr: "",
+    spawnError: result.error?.message,
+  };
 }
 
 export async function runSupabaseCommand(

@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-const ENTER_ALT_SCREEN = "\x1b[?1049h";
-const LEAVE_ALT_SCREEN = "\x1b[?1049l";
-const HIDE_CURSOR = "\x1b[?25l";
-const SHOW_CURSOR = "\x1b[?25h";
+export const ENTER_ALT_SCREEN = "\x1b[?1049h";
+export const LEAVE_ALT_SCREEN = "\x1b[?1049l";
+export const HIDE_CURSOR = "\x1b[?25l";
+export const SHOW_CURSOR = "\x1b[?25h";
 
 export function showCursor(): void {
   process.stdout.write(SHOW_CURSOR);

@@ -6,6 +6,7 @@ import {
   findLocalSupabaseBinDir,
   resolveSupabaseCommand,
   runCommand,
+  runInteractiveCommand,
 } from "./runner.js";
 
 const tempDirs: string[] = [];
@@ -85,6 +86,19 @@ describe("resolveSupabaseCommand", () => {
     expect(resolution.source).toBe("path");
     expect(resolution.localBinDir).toBeUndefined();
     expect(resolution.env.PATH).toBe("/usr/bin");
+  });
+});
+
+describe("runInteractiveCommand", () => {
+  it("runs synchronously and returns exit code", () => {
+    const result = runInteractiveCommand("echo", ["hello"], "/tmp");
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe("");
+  });
+
+  it("returns non-zero for failing commands", () => {
+    const result = runInteractiveCommand("false", [], "/tmp");
+    expect(result.exitCode).not.toBe(0);
   });
 });
 

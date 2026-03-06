@@ -8,6 +8,7 @@ import { Divider } from "../components/Divider.js";
 import { StatusBar } from "../components/StatusBar.js";
 import { CommandOutput } from "../components/CommandOutput.js";
 import { useCommand } from "../hooks/useCommand.js";
+import { useInteractiveRun } from "../hooks/useInteractiveRun.js";
 import { isPinnedRun, togglePinnedRun } from "../data/pins.js";
 import { openInBrowser, copyToClipboard } from "../lib/clipboard.js";
 import { parseErrorSuggestions } from "../lib/errorSuggestions.js";
@@ -52,6 +53,7 @@ export function CommandExecution({
   const { status, result, run, reset } = useCommand(tool, process.cwd(), {
     quiet: panelMode,
   });
+  const { runInteractive } = useInteractiveRun();
 
   const cmdDisplay = `${tool} ${currentArgs.join(" ")}`;
   const runCommand = currentArgs.join(" ");
@@ -265,6 +267,14 @@ export function CommandExecution({
     }
   }
 
+  if (panelMode && !result?.spawnError) {
+    errorItems.push({
+      value: "run-interactive",
+      label: "\uD83D\uDCBB Run in terminal",
+      hint: "Suspend TUI and run interactively",
+    });
+  }
+
   errorItems.push({
     value: "copy",
     label: "\uD83D\uDCCB Copy command to clipboard",
@@ -331,7 +341,7 @@ export function CommandExecution({
       <CommandOutput
         stdout={result?.stdout}
         stderr={result?.stderr}
-        height={Math.max(3, height - 16 - (suggestions.length > 0 ? suggestions.length + 4 : 0))}
+        height={Math.max(3, height - 13 - errorItems.length - (suggestions.length > 0 ? suggestions.length + 4 : 0))}
         isActive={false}
       />
 
@@ -369,6 +379,16 @@ export function CommandExecution({
               setPinMessage(undefined);
               reset();
               setPhase("running");
+              break;
+            }
+            case "run-interactive": {
+              const interactiveResult = runInteractive(tool, currentArgs);
+              if (
+                !interactiveResult.spawnError &&
+                interactiveResult.exitCode === 0
+              ) {
+                setPhase("success");
+              }
               break;
             }
             case "copy":
