@@ -2,30 +2,46 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Box, Text } from "ink";
 import { SelectList } from "../components/SelectList.js";
 import { TextPrompt } from "../components/TextPrompt.js";
+import { ToolBadge } from "../components/ToolBadge.js";
 import { StatusBar } from "../components/StatusBar.js";
 import { getPinnedRuns, togglePinnedRun } from "../data/pins.js";
-import { getSuggestedArgOptions } from "../data/suggestedArgs.js";
+import { findCommandByValue } from "../data/commands/index.js";
 import {
   buildCommandArgItems,
   getRunCommandFromArgsSelection,
 } from "./commandArgsModel.js";
 import type { NavigationParams, Screen } from "../hooks/useNavigation.js";
+import type { CliToolId, SuggestedArg } from "../data/types.js";
 import { inkColors } from "../theme.js";
 
 interface CommandArgsProps {
   command: string;
+  tool?: CliToolId;
   onNavigate: (screen: Screen, params?: NavigationParams) => void;
   onBack: () => void;
+  width?: number;
+  panelMode?: boolean;
+  isInputActive?: boolean;
 }
 
 type Phase = "select" | "custom";
 
 export function CommandArgs({
   command,
+  tool,
   onNavigate,
   onBack,
+  width = 80,
+  panelMode = false,
+  isInputActive = true,
 }: CommandArgsProps): React.ReactElement {
-  const suggestions = useMemo(() => getSuggestedArgOptions(command), [command]);
+  const cmdDef = useMemo(() => findCommandByValue(command), [command]);
+  const resolvedTool = tool ?? cmdDef?.tool ?? "supabase";
+  const suggestions: SuggestedArg[] = useMemo(
+    () => cmdDef?.suggestedArgs ?? [],
+    [cmdDef],
+  );
+
   const [pinnedRuns, setPinnedRuns] = useState<string[]>(() => getPinnedRuns());
   const [pinFeedback, setPinFeedback] = useState<string>();
   const [phase, setPhase] = useState<Phase>(
@@ -43,9 +59,11 @@ export function CommandArgs({
   }, [pinFeedback]);
 
   const navigateWithExtraArgs = (extraArgs: string[]) => {
+    const baseArgs = cmdDef ? cmdDef.base : [command];
     onNavigate("flag-selection", {
-      args: [command, ...extraArgs],
+      args: [...baseArgs, ...extraArgs],
       command,
+      tool: resolvedTool,
     });
   };
 
@@ -59,12 +77,16 @@ export function CommandArgs({
           items={[{ value: "__back__", label: "← Back to menu" }]}
           onSelect={onBack}
           onCancel={onBack}
+          width={width}
+          isInputActive={isInputActive}
+          arrowNavigation={panelMode}
         />
       </Box>
     );
   }
 
   if (phase === "custom") {
+    const toolLabel = resolvedTool === "supabase" ? "supabase" : resolvedTool;
     return (
       <Box flexDirection="column">
         <Box marginBottom={1} gap={1}>
@@ -72,10 +94,11 @@ export function CommandArgs({
             Command
           </Text>
           <Text>{command}</Text>
+          <ToolBadge tool={resolvedTool} />
         </Box>
 
         <TextPrompt
-          label={`Additional args for supabase ${command}?`}
+          label={`Additional args for ${toolLabel} ${command}?`}
           placeholder="e.g. list, pull, push (Enter to skip)"
           onSubmit={(extra) => {
             const extraArgs = extra
@@ -93,19 +116,27 @@ export function CommandArgs({
           }}
         />
 
-        <StatusBar hint="Type args · Enter to continue · Esc to go back" />
+        {!panelMode && <StatusBar hint="Type args · Enter to continue · Esc to go back" width={width} />}
       </Box>
     );
   }
+
+  // Map SuggestedArg[] to the legacy format expected by buildCommandArgItems
+  const legacySuggestions = suggestions.map((s) => ({
+    value: s.value,
+    label: s.label,
+    hint: s.hint,
+    args: s.args,
+  }));
 
   const items = useMemo(
     () =>
       buildCommandArgItems({
         command,
-        suggestions,
+        suggestions: legacySuggestions,
         pinnedRuns,
       }),
-    [command, pinnedRuns, suggestions],
+    [command, legacySuggestions, pinnedRuns],
   );
 
   return (
@@ -115,6 +146,7 @@ export function CommandArgs({
           Command
         </Text>
         <Text>{command}</Text>
+        <ToolBadge tool={resolvedTool} />
       </Box>
 
       {pinFeedback && (
@@ -145,7 +177,7 @@ export function CommandArgs({
             const runCommand = getRunCommandFromArgsSelection(
               command,
               value,
-              suggestions,
+              legacySuggestions,
             );
             if (runCommand) {
               navigateWithExtraArgs(
@@ -162,7 +194,7 @@ export function CommandArgs({
           const runCommand = getRunCommandFromArgsSelection(
             command,
             item.value,
-            suggestions,
+            legacySuggestions,
           );
           if (!runCommand) {
             return;
@@ -179,9 +211,12 @@ export function CommandArgs({
         }}
         onCancel={onBack}
         boxedSections
+        width={width}
+        isInputActive={isInputActive}
+          arrowNavigation={panelMode}
       />
 
-      <StatusBar hint="↑↓ navigate · Enter select · → pin run · Esc back" />
+      {!panelMode && <StatusBar hint="↑↓ navigate · Enter select · p pin · Esc back" width={width} />}
     </Box>
   );
 }

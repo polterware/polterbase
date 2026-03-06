@@ -132,7 +132,7 @@ export function MainMenu({
         boxedSections
       />
 
-      <StatusBar hint="↑↓ navigate · Enter select · → pin/unpin · Esc back" />
+      <StatusBar hint="↑↓ navigate · Enter select · p pin · Esc back" />
     </Box>
   );
 }

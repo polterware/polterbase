@@ -1,18 +1,16 @@
 import { useState, useCallback } from "react";
+import type { Screen, CliToolId } from "../data/types.js";
 
-export type Screen =
-  | "main-menu"
-  | "command-args"
-  | "custom-command"
-  | "flag-selection"
-  | "command-execution"
-  | "confirm-execute"
-  | "self-update";
+export type { Screen };
 
 export interface NavigationParams {
   command?: string;
+  commandId?: string;
+  tool?: CliToolId;
   args?: string[];
   flags?: string[];
+  featureId?: string;
+  pipelineId?: string;
 }
 
 export interface NavigationState {
@@ -21,21 +19,32 @@ export interface NavigationState {
 }
 
 export function useNavigation() {
-  const [state, setState] = useState<NavigationState>({
-    screen: "main-menu",
-    params: {},
-  });
+  const [stack, setStack] = useState<NavigationState[]>([
+    { screen: "home", params: {} },
+  ]);
+
+  const current = stack[stack.length - 1]!;
 
   const navigate = useCallback((screen: Screen, params?: NavigationParams) => {
-    setState({
-      screen,
-      params: params ?? {},
-    });
+    setStack((prev) => [...prev, { screen, params: params ?? {} }]);
   }, []);
 
   const goBack = useCallback(() => {
-    setState({ screen: "main-menu", params: {} });
+    setStack((prev) => {
+      if (prev.length <= 1) return [{ screen: "home", params: {} }];
+      return prev.slice(0, -1);
+    });
   }, []);
 
-  return { screen: state.screen, params: state.params, navigate, goBack };
+  const goHome = useCallback(() => {
+    setStack([{ screen: "home", params: {} }]);
+  }, []);
+
+  return {
+    screen: current.screen,
+    params: current.params,
+    navigate,
+    goBack,
+    goHome,
+  };
 }

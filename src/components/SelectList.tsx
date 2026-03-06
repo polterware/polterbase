@@ -29,6 +29,9 @@ interface SelectListProps {
   maxVisible?: number;
   labelWidth?: number;
   boxedSections?: boolean;
+  width?: number;
+  isInputActive?: boolean;
+  arrowNavigation?: boolean;
 }
 
 export function SelectList({
@@ -37,9 +40,14 @@ export function SelectList({
   onRightAction,
   onCancel,
   maxVisible = 16,
-  labelWidth = 34,
+  labelWidth: labelWidthProp,
   boxedSections = false,
+  width = 80,
+  isInputActive = true,
+  arrowNavigation = false,
 }: SelectListProps): React.ReactElement {
+  const labelWidth = labelWidthProp ?? Math.max(16, Math.floor(width * 0.45));
+  const isNarrow = width < 50;
   const isHeader = (item: SelectItem) => item.kind === "header";
   const isSelectable = (item: SelectItem) =>
     item.selectable ?? !isHeader(item);
@@ -101,20 +109,24 @@ export function SelectList({
       });
     }
 
-    if (key.return) {
+    if (key.return || (arrowNavigation && key.rightArrow)) {
       if (selectedItem) {
         onSelect(selectedItem.value, selectedItem);
       }
     }
 
-    if (key.rightArrow && onRightAction && selectedItem?.rightActionable) {
+    if (arrowNavigation && key.leftArrow) {
+      if (onCancel) onCancel();
+    }
+
+    if ((input === "p" || input === "P") && onRightAction && selectedItem?.rightActionable) {
       onRightAction(selectedItem);
     }
 
     if (key.escape && onCancel) {
       onCancel();
     }
-  });
+  }, { isActive: isInputActive });
 
   const getWindowStart = (): number => {
     if (items.length <= maxVisible) {
@@ -229,16 +241,14 @@ export function SelectList({
                   : undefined
             }
             bold={isSelected || isPinnedRow(item)}
+            wrap="truncate"
           >
             {item.icon ? `${item.icon} ` : ""}
             {item.label}
           </Text>
         </Box>
 
-        {item.hint && <Text dimColor>{item.hint}</Text>}
-        {isSelected && item.rightActionable && (
-          <Text dimColor>→ pin/unpin</Text>
-        )}
+        {!isNarrow && item.hint && <Text dimColor>{item.hint}</Text>}
       </Box>
     );
   };

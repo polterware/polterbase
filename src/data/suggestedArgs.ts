@@ -1,3 +1,5 @@
+// Legacy re-export. New code should use CommandDef.suggestedArgs from ./commands/index.js
+
 export interface SuggestedArgOption {
   value: string;
   label: string;

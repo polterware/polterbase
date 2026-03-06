@@ -1,5 +1,11 @@
 import type { SelectItem } from "../components/SelectList.js";
-import type { SuggestedArgOption } from "../data/suggestedArgs.js";
+
+export interface SuggestedArgOption {
+  value: string;
+  label: string;
+  hint?: string;
+  args: string[];
+}
 
 interface BuildCommandArgItemsParams {
   command: string;
@@ -70,7 +76,7 @@ export function buildCommandArgItems({
       value: "__run_base__",
       label: "Run without additional args",
       hint: [
-        `supabase ${command}`,
+        `${command}`,
         pinnedRunSet.has(baseRunCommand) ? "pinned run" : undefined,
       ]
         .filter(Boolean)

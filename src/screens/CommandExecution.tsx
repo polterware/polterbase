@@ -3,17 +3,23 @@ import { Box, Text } from "ink";
 import { Spinner } from "../components/Spinner.js";
 import { SelectList, type SelectItem } from "../components/SelectList.js";
 import { ConfirmPrompt } from "../components/ConfirmPrompt.js";
+import { ToolBadge } from "../components/ToolBadge.js";
 import { Divider } from "../components/Divider.js";
 import { StatusBar } from "../components/StatusBar.js";
 import { useCommand } from "../hooks/useCommand.js";
 import { isPinnedRun, togglePinnedRun } from "../data/pins.js";
 import { openInBrowser, copyToClipboard } from "../lib/clipboard.js";
 import { inkColors } from "../theme.js";
+import type { CliToolId } from "../data/types.js";
 
 interface CommandExecutionProps {
   args: string[];
+  tool?: CliToolId;
   onBack: () => void;
   onExit: () => void;
+  width?: number;
+  panelMode?: boolean;
+  isInputActive?: boolean;
 }
 
 type Phase =
@@ -25,25 +31,27 @@ type Phase =
 
 export function CommandExecution({
   args: initialArgs,
+  tool = "supabase",
   onBack,
   onExit,
+  width = 80,
+  panelMode = false,
+  isInputActive = true,
 }: CommandExecutionProps): React.ReactElement {
   const [phase, setPhase] = useState<Phase>("confirm");
   const [currentArgs, setCurrentArgs] = useState(initialArgs);
   const [pinMessage, setPinMessage] = useState<string>();
-  const { status, result, run, reset } = useCommand();
+  const { status, result, run, reset } = useCommand(tool);
 
-  const cmdDisplay = `supabase ${currentArgs.join(" ")}`;
+  const cmdDisplay = `${tool} ${currentArgs.join(" ")}`;
   const runCommand = currentArgs.join(" ");
 
-  // Start execution after confirm
   useEffect(() => {
     if (phase === "running" && status === "idle") {
       run(currentArgs);
     }
   }, [phase, status, run, currentArgs]);
 
-  // Transition after command completes
   useEffect(() => {
     if (phase === "running" && status === "success") {
       if (isPinnedRun(runCommand)) {
@@ -57,7 +65,6 @@ export function CommandExecution({
     }
   }, [phase, runCommand, status]);
 
-  // Confirm phase
   if (phase === "confirm") {
     return (
       <Box flexDirection="column">
@@ -76,19 +83,19 @@ export function CommandExecution({
     );
   }
 
-  // Running phase
   if (phase === "running") {
     return (
       <Box flexDirection="column">
-        <Divider />
+        <Divider width={width} />
         <Box marginY={1} gap={1}>
           <Text color={inkColors.accent} bold>
             ▶
           </Text>
           <Text dimColor>Running:</Text>
           <Text>{cmdDisplay}</Text>
+          <ToolBadge tool={tool} />
         </Box>
-        <Divider />
+        <Divider width={width} />
         <Box marginTop={1}>
           <Spinner label={`Executing ${cmdDisplay}...`} />
         </Box>
@@ -99,7 +106,7 @@ export function CommandExecution({
   if (phase === "success-pin-offer") {
     return (
       <Box flexDirection="column">
-        <Divider />
+        <Divider width={width} />
         <Box marginY={1} gap={1}>
           <Text color={inkColors.accent} bold>
             ✓
@@ -124,11 +131,10 @@ export function CommandExecution({
     );
   }
 
-  // Success phase
   if (phase === "success") {
     return (
       <Box flexDirection="column">
-        <Divider />
+        <Divider width={width} />
         <Box marginY={1} gap={1}>
           <Text color={inkColors.accent} bold>
             ✓
@@ -148,6 +154,9 @@ export function CommandExecution({
           items={[{ value: "__back__", label: "← Back to menu" }]}
           onSelect={onBack}
           onCancel={onBack}
+          width={width}
+          isInputActive={isInputActive}
+          arrowNavigation={panelMode}
         />
       </Box>
     );
@@ -171,11 +180,6 @@ export function CommandExecution({
 
   errorItems.push(
     {
-      value: "docs",
-      label: "📖 Open Supabase CLI docs",
-      hint: "Opens in browser",
-    },
-    {
       value: "copy",
       label: "📋 Copy command to clipboard",
     },
@@ -185,7 +189,7 @@ export function CommandExecution({
 
   return (
     <Box flexDirection="column">
-      <Divider />
+      <Divider width={width} />
 
       {result?.spawnError ? (
         <Box flexDirection="column" marginY={1}>
@@ -205,14 +209,8 @@ export function CommandExecution({
             result.spawnError.includes("not found")) && (
               <Box flexDirection="column" marginLeft={2} marginTop={1}>
                 <Text color={inkColors.accent} bold>
-                  💡 Supabase CLI not found in this repository or PATH
+                  💡 {tool} CLI not found in this repository or PATH
                 </Text>
-                <Box gap={1}>
-                  <Text dimColor>Install it:</Text>
-                  <Text color={inkColors.accent}>
-                    https://supabase.com/docs/guides/cli
-                  </Text>
-                </Box>
               </Box>
             )}
         </Box>
@@ -264,9 +262,6 @@ export function CommandExecution({
               setPhase("running");
               break;
             }
-            case "docs":
-              await openInBrowser("https://supabase.com/docs/guides/cli");
-              break;
             case "copy":
               await copyToClipboard(cmdDisplay);
               break;
@@ -279,9 +274,12 @@ export function CommandExecution({
           }
         }}
         onCancel={onBack}
+        width={width}
+        isInputActive={isInputActive}
+          arrowNavigation={panelMode}
       />
 
-      <StatusBar />
+      {!panelMode && <StatusBar width={width} />}
     </Box>
   );
 }

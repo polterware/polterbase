@@ -1,0 +1,144 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Box, Text } from "ink";
+import { SelectList, type SelectItem } from "./SelectList.js";
+import { inkColors } from "../theme.js";
+import {
+  getPinnedCommands,
+  getPinnedRuns,
+  togglePinnedCommand,
+  togglePinnedRun,
+} from "../data/pins.js";
+import { buildHomeItems } from "../screens/homeModel.js";
+import { findCommandByValue } from "../data/commands/index.js";
+import type { Feature } from "../data/types.js";
+import type { NavigationParams, Screen } from "../hooks/useNavigation.js";
+
+interface FeatureCommandsProps {
+  feature: Feature;
+  onNavigate: (screen: Screen, params?: NavigationParams) => void;
+  onExit: () => void;
+  onBack?: () => void;
+  width?: number;
+  height?: number;
+  isInputActive?: boolean;
+}
+
+export function FeatureCommands({
+  feature,
+  onNavigate,
+  onExit,
+  onBack,
+  width = 80,
+  height = 24,
+  isInputActive = true,
+}: FeatureCommandsProps): React.ReactElement {
+  const [pinnedCommands, setPinnedCommands] = useState<string[]>(() => getPinnedCommands());
+  const [pinnedRuns, setPinnedRuns] = useState<string[]>(() => getPinnedRuns());
+  const [pinFeedback, setPinFeedback] = useState<string>();
+
+  useEffect(() => {
+    if (!pinFeedback) return;
+    const timeout = setTimeout(() => setPinFeedback(undefined), 1400);
+    return () => clearTimeout(timeout);
+  }, [pinFeedback]);
+
+  const items = useMemo(
+    () =>
+      buildHomeItems({
+        activeFeature: feature,
+        pinnedCommands,
+        pinnedRuns,
+      }),
+    [feature, pinnedCommands, pinnedRuns],
+  );
+
+  const pinnedCommandSet = useMemo(() => new Set(pinnedCommands), [pinnedCommands]);
+  const pinnedRunSet = useMemo(() => new Set(pinnedRuns), [pinnedRuns]);
+
+  const refreshPins = () => {
+    setPinnedCommands(getPinnedCommands());
+    setPinnedRuns(getPinnedRuns());
+  };
+
+  const handleSelect = (value: string, item?: SelectItem) => {
+    if (!item) return;
+
+    if (item.kind === "command") {
+      const cmdDef = findCommandByValue(value);
+      if (cmdDef) {
+        onNavigate("command-args", {
+          command: value,
+          commandId: cmdDef.id,
+          tool: cmdDef.tool,
+        });
+      } else {
+        onNavigate("command-args", { command: value, tool: "supabase" });
+      }
+      return;
+    }
+
+    if (item.kind === "run") {
+      const args = value.split(" ").filter(Boolean);
+      if (args.length > 0) {
+        const basePart = args[0] ?? "";
+        const cmdDef = findCommandByValue(basePart);
+        const tool = cmdDef?.tool ?? "supabase";
+        onNavigate("confirm-execute", { args, tool });
+      }
+      return;
+    }
+
+    // Actions are handled via sidebar in panel mode
+  };
+
+  const handleRightAction = (item: SelectItem) => {
+    if (item.kind === "command") {
+      const wasPinned = pinnedCommandSet.has(item.value);
+      togglePinnedCommand(item.value);
+      refreshPins();
+      setPinFeedback(
+        wasPinned ? `Unpinned "${item.value}"` : `Pinned "${item.value}"`,
+      );
+      return;
+    }
+
+    if (item.kind === "run") {
+      const wasPinned = pinnedRunSet.has(item.value);
+      togglePinnedRun(item.value);
+      refreshPins();
+      setPinFeedback(
+        wasPinned
+          ? `Unpinned run "${item.value}"`
+          : `Pinned run "${item.value}"`,
+      );
+    }
+  };
+
+  return (
+    <Box flexDirection="column" paddingX={1}>
+      <Box marginBottom={1}>
+        <Text color={inkColors.accent} bold>
+          {feature.icon} {feature.label}
+        </Text>
+      </Box>
+
+      {pinFeedback && (
+        <Box marginBottom={1}>
+          <Text color={inkColors.accent}>✓ {pinFeedback}</Text>
+        </Box>
+      )}
+
+      <SelectList
+        items={items}
+        onSelect={handleSelect}
+        onRightAction={handleRightAction}
+        boxedSections
+        width={Math.max(20, width - 4)}
+        maxVisible={Math.max(6, height - 6)}
+        onCancel={onBack}
+        isInputActive={isInputActive}
+        arrowNavigation
+      />
+    </Box>
+  );
+}

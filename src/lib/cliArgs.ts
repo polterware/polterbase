@@ -1,8 +1,13 @@
 import type { AppAction, MigrationAction, ParsedCliOptions } from "../apps/types.js";
 
+export type CliMode = "interactive" | "app" | "help" | "pipeline-run" | "config" | "plan" | "apply" | "status";
+
 export interface ParsedCliCommand {
-  mode: "interactive" | "app" | "help";
+  mode: CliMode;
   options: ParsedCliOptions;
+  pipelineName?: string;
+  configEdit?: boolean;
+  classic?: boolean;
 }
 
 function takeValue(
@@ -26,24 +31,52 @@ function takeValue(
 }
 
 export function parseCliArgs(argv: string[]): ParsedCliCommand {
-  if (argv.length === 0) {
-    return { mode: "interactive", options: {} };
+  const classic = argv.includes("--classic");
+  const filteredArgv = argv.filter((a) => a !== "--classic");
+
+  if (filteredArgv.length === 0) {
+    return { mode: "interactive", options: {}, classic };
   }
 
-  if (argv[0] === "--help" || argv[0] === "help") {
+  if (filteredArgv[0] === "--help" || filteredArgv[0] === "help") {
     return { mode: "help", options: {} };
   }
 
-  if (argv[0] !== "app") {
-    return { mode: "interactive", options: {} };
+  // Use filteredArgv from here on
+  const argv_ = filteredArgv;
+
+  // New subcommands
+  if (argv_[0] === "pipeline" && argv_[1] === "run" && argv_[2]) {
+    return { mode: "pipeline-run", options: {}, pipelineName: argv_[2] };
+  }
+
+  if (argv_[0] === "config") {
+    const edit = argv_.includes("--edit");
+    return { mode: "config", options: {}, configEdit: edit, classic };
+  }
+
+  if (argv_[0] === "plan") {
+    return { mode: "plan", options: {} };
+  }
+
+  if (argv_[0] === "apply") {
+    return { mode: "apply", options: {} };
+  }
+
+  if (argv_[0] === "status") {
+    return { mode: "status", options: {} };
+  }
+
+  if (argv_[0] !== "app") {
+    return { mode: "interactive", options: {}, classic };
   }
 
   const options: ParsedCliOptions = {};
-  options.action = argv[1] as AppAction | undefined;
-  options.app = argv[2];
+  options.action = argv_[1] as AppAction | undefined;
+  options.app = argv_[2];
 
-  for (let index = 3; index < argv.length; index += 1) {
-    const token = argv[index]!;
+  for (let index = 3; index < argv_.length; index += 1) {
+    const token = argv_[index]!;
 
     if (token === "push" || token === "lint" || token === "reset" || token === "local-reset") {
       options.migrationAction = token as MigrationAction;
@@ -71,28 +104,28 @@ export function parseCliArgs(argv: string[]): ParsedCliCommand {
     }
 
     if (token.startsWith("--path")) {
-      const parsed = takeValue(argv, index);
+      const parsed = takeValue(argv_, index);
       options.path = parsed.value;
       index = parsed.nextIndex;
       continue;
     }
 
     if (token.startsWith("--version")) {
-      const parsed = takeValue(argv, index);
+      const parsed = takeValue(argv_, index);
       options.version = parsed.value;
       index = parsed.nextIndex;
       continue;
     }
 
     if (token.startsWith("--artifact-url")) {
-      const parsed = takeValue(argv, index);
+      const parsed = takeValue(argv_, index);
       options.artifactUrl = parsed.value;
       index = parsed.nextIndex;
       continue;
     }
 
     if (token.startsWith("--install-dir")) {
-      const parsed = takeValue(argv, index);
+      const parsed = takeValue(argv_, index);
       options.installDir = parsed.value;
       index = parsed.nextIndex;
       continue;
@@ -108,10 +141,17 @@ export function parseCliArgs(argv: string[]): ParsedCliCommand {
 export function printCliHelp(): void {
   process.stdout.write(
     [
-      "Polter",
+      "Polter — Project & Infrastructure Orchestrator",
       "",
       "Usage:",
-      "  polter",
+      "  polter                           Interactive mode",
+      "  polter pipeline run <name>       Run a saved pipeline",
+      "  polter config                    Manage per-repo config",
+      "  polter config --edit             Open config in $EDITOR",
+      "  polter plan                      Show declarative state diff",
+      "  polter apply                     Apply declarative state changes",
+      "  polter status                    Show current tool status",
+      "",
       "  polter app setup ops [--path <dir>] [--create-project|--use-existing-project] [--yes]",
       "  polter app link ops [--path <dir>] [--relink]",
       "  polter app migrate ops [push|lint|reset|local-reset] [--path <dir>] [--relink]",
@@ -119,12 +159,8 @@ export function printCliHelp(): void {
       "  polter app install ops [--version <version>] [--artifact-url <url>] [--install-dir <dir>] [--yes]",
       "  polter app update ops [--version <version>] [--artifact-url <url>] [--install-dir <dir>] [--yes]",
       "",
-      "Notes:",
-      "  - App workflows stay separate from the generic Supabase interactive menu.",
-      "  - `install ops` is macOS-only and resolves the latest GitHub release from polterware/ops by default.",
-      "  - `update ops` replaces the installed app bundle without touching the persisted runtime/app state.",
-      "  - Use --artifact-url or POLTER_OPS_MACOS_ARTIFACT_URL to override the downloaded asset.",
-      "  - Use POLTER_OPS_GITHUB_REPO=owner/repo to resolve releases from a different repository.",
+      "Options:",
+      "  --classic                        Use classic single-screen UI",
       "",
     ].join("\n"),
   );

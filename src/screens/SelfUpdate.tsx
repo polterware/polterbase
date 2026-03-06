@@ -12,6 +12,9 @@ import { inkColors } from "../theme.js";
 interface SelfUpdateProps {
   onBack: () => void;
   onExit: () => void;
+  width?: number;
+  panelMode?: boolean;
+  isInputActive?: boolean;
 }
 
 type Phase = "target" | "confirm" | "running" | "success" | "error";
@@ -28,6 +31,9 @@ function getUpdateArgs(target: UpdateTarget): string[] {
 export function SelfUpdate({
   onBack,
   onExit,
+  width = 80,
+  panelMode = false,
+  isInputActive = true,
 }: SelfUpdateProps): React.ReactElement {
   const repositoryRoot = findNearestPackageRoot();
   const [target, setTarget] = useState<UpdateTarget>(
@@ -90,6 +96,9 @@ export function SelfUpdate({
             setPhase("confirm");
           }}
           onCancel={onBack}
+          width={width}
+          isInputActive={isInputActive}
+          arrowNavigation={panelMode}
         />
 
         {repositoryRoot && (
@@ -139,7 +148,7 @@ export function SelfUpdate({
   if (phase === "running") {
     return (
       <Box flexDirection="column">
-        <Divider />
+        <Divider width={width} />
         <Box marginY={1} gap={1}>
           <Text color={inkColors.accent} bold>
             ▶
@@ -147,7 +156,7 @@ export function SelfUpdate({
           <Text dimColor>Running:</Text>
           <Text>{updateDisplay}</Text>
         </Box>
-        <Divider />
+        <Divider width={width} />
         <Box marginTop={1}>
           <Spinner label="Updating Polter..." />
         </Box>
@@ -158,7 +167,7 @@ export function SelfUpdate({
   if (phase === "success") {
     return (
       <Box flexDirection="column">
-        <Divider />
+        <Divider width={width} />
         <Box marginY={1} gap={1}>
           <Text color={inkColors.accent} bold>
             ✓
@@ -187,6 +196,9 @@ export function SelfUpdate({
             onBack();
           }}
           onCancel={onBack}
+          width={width}
+          isInputActive={isInputActive}
+          arrowNavigation={panelMode}
         />
       </Box>
     );
@@ -194,7 +206,7 @@ export function SelfUpdate({
 
   return (
     <Box flexDirection="column">
-      <Divider />
+      <Divider width={width} />
 
       {result?.spawnError ? (
         <Box flexDirection="column" marginY={1}>
@@ -271,9 +283,12 @@ export function SelfUpdate({
           }
         }}
         onCancel={onBack}
+        width={width}
+        isInputActive={isInputActive}
+          arrowNavigation={panelMode}
       />
 
-      <StatusBar />
+      {!panelMode && <StatusBar width={width} />}
     </Box>
   );
 }

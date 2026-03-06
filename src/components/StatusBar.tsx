@@ -4,17 +4,20 @@ import { VERSION } from "../theme.js";
 
 interface StatusBarProps {
   hint?: string;
+  width?: number;
 }
 
-export function StatusBar({ hint }: StatusBarProps): React.ReactElement {
+export function StatusBar({ hint, width = 80 }: StatusBarProps): React.ReactElement {
   return (
     <Box marginTop={1} justifyContent="space-between">
       <Text dimColor>
         {hint || "↑↓ navigate · Enter select · Esc back"}
       </Text>
-      <Text dimColor>
-        polter v{VERSION}
-      </Text>
+      {width >= 60 && (
+        <Text dimColor>
+          polter v{VERSION}
+        </Text>
+      )}
     </Box>
   );
 }

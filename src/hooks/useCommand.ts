@@ -1,15 +1,16 @@
 import { useState, useCallback } from "react";
 import {
   runCommand,
-  runSupabaseCommand,
   type CommandExecution,
   type RunResult,
 } from "../lib/runner.js";
+import { resolveToolCommand } from "../lib/toolResolver.js";
+import type { CliToolId } from "../data/types.js";
 
 export type CommandStatus = "idle" | "running" | "success" | "error";
 
 export function useCommand(
-  execution: string | CommandExecution = "supabase",
+  execution: string | CliToolId | CommandExecution = "supabase",
   cwd: string = process.cwd(),
 ) {
   const [status, setStatus] = useState<CommandStatus>("idle");
@@ -19,10 +20,21 @@ export function useCommand(
     setStatus("running");
     setResult(null);
 
-    const res =
-      execution === "supabase"
-        ? await runSupabaseCommand(args, cwd)
-        : await runCommand(execution, args, cwd);
+    let resolvedExecution: string | CommandExecution;
+
+    if (typeof execution === "string") {
+      const toolIds: string[] = ["supabase", "gh", "vercel"];
+      if (toolIds.includes(execution)) {
+        const resolved = resolveToolCommand(execution as CliToolId, cwd);
+        resolvedExecution = { command: resolved.command, env: resolved.env };
+      } else {
+        resolvedExecution = execution;
+      }
+    } else {
+      resolvedExecution = execution;
+    }
+
+    const res = await runCommand(resolvedExecution, args, cwd);
     setResult(res);
 
     if (res.spawnError || (res.exitCode !== null && res.exitCode !== 0)) {

@@ -1,3 +1,6 @@
+// Re-export for backward compatibility with existing code and tests.
+// New code should import from ./commands/index.js and ./features.js instead.
+
 export interface CommandOption {
   value: string;
   label: string;

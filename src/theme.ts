@@ -63,6 +63,13 @@ export const symbols = {
   horizontal: "─",
 } as const;
 
+export const panel = {
+  borderFocused: SUPABASE_HEX,
+  borderDim: "#555555",
+  sidebarWidth: (termWidth: number) =>
+    Math.max(20, Math.min(35, Math.floor(termWidth * 0.3))),
+} as const;
+
 export const ghost = {
   art: [
     "    ▄▄████████████▄▄",

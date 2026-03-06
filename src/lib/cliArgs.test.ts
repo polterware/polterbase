@@ -67,6 +67,24 @@ describe("parseCliArgs", () => {
     });
   });
 
+  it("parses config --edit flag", () => {
+    expect(parseCliArgs(["config", "--edit"])).toEqual({
+      mode: "config",
+      options: {},
+      configEdit: true,
+      classic: false,
+    });
+  });
+
+  it("parses config without --edit", () => {
+    expect(parseCliArgs(["config"])).toEqual({
+      mode: "config",
+      options: {},
+      configEdit: false,
+      classic: false,
+    });
+  });
+
   it("parses app update version overrides", () => {
     expect(
       parseCliArgs([
