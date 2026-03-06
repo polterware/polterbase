@@ -94,7 +94,7 @@ export function CustomCommand({
         }}
         onSubmit={(value) => {
           const args = value.split(" ").filter(Boolean);
-          onNavigate("flag-selection", { args, tool: selectedTool });
+          onNavigate("flag-selection", { args, tool: selectedTool, interactive: true });
         }}
         onCancel={() => setPhase("tool-select")}
         arrowNavigation={panelMode}

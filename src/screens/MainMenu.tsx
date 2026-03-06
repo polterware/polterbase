@@ -11,6 +11,7 @@ import {
   togglePinnedRun,
 } from "../data/pins.js";
 import { buildMainMenuItems } from "./mainMenuModel.js";
+import { findCommandByValue } from "../data/commands.js";
 import type { NavigationParams, Screen } from "../hooks/useNavigation.js";
 
 interface MainMenuProps {
@@ -66,7 +67,10 @@ export function MainMenu({
     if (item.kind === "run") {
       const args = value.split(" ").filter(Boolean);
       if (args.length > 0) {
-        onNavigate("confirm-execute", { args });
+        const basePart = args[0] ?? "";
+        const cmdDef = findCommandByValue(basePart);
+        const tool = cmdDef?.tool ?? "supabase";
+        onNavigate("confirm-execute", { args, tool, interactive: cmdDef?.interactive });
       }
       return;
     }

@@ -75,7 +75,7 @@ export function PinnedCommands({
         const basePart = args[0] ?? "";
         const cmdDef = findCommandByValue(basePart);
         const tool = cmdDef?.tool ?? "supabase";
-        onNavigate("confirm-execute", { args, tool });
+        onNavigate("confirm-execute", { args, tool, interactive: cmdDef?.interactive });
       }
     }
   };

@@ -80,7 +80,7 @@ export function FlagSelection({
               selectedFlags.length > 0
                 ? [...args, ...selectedFlags]
                 : args;
-            onNavigate("confirm-execute", { args: finalArgs, tool });
+            onNavigate("confirm-execute", { args: finalArgs, tool, interactive });
           }}
           onCancel={onBack}
           isInputActive={isInputActive}

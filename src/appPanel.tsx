@@ -371,7 +371,7 @@ export function AppPanel(): React.ReactElement {
             onHome={nav.goHomeInner}
             onExit={handleExit}
             onRunSuggestion={(sugTool, sugArgs) => {
-              nav.switchViewAndNavigate("custom-command", "confirm-execute", { tool: sugTool, args: sugArgs });
+              nav.switchViewAndNavigate("custom-command", "confirm-execute", { tool: sugTool, args: sugArgs, interactive: true });
             }}
             width={w}
             height={mainContentHeight}
