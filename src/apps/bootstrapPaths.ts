@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-export function getPolterstoreBootstrapPayloadPath(): string {
+export function getOpsBootstrapPayloadPath(): string {
   const home = homedir();
 
   if (process.platform === "darwin") {
@@ -9,7 +9,7 @@ export function getPolterstoreBootstrapPayloadPath(): string {
       home,
       "Library",
       "Application Support",
-      "polterstore",
+      "ops",
       "bootstrap",
       "supabase.json",
     );
@@ -17,8 +17,8 @@ export function getPolterstoreBootstrapPayloadPath(): string {
 
   if (process.platform === "win32") {
     const appData = process.env.APPDATA ?? join(home, "AppData", "Roaming");
-    return join(appData, "polterstore", "bootstrap", "supabase.json");
+    return join(appData, "ops", "bootstrap", "supabase.json");
   }
 
-  return join(home, ".config", "polterstore", "bootstrap", "supabase.json");
+  return join(home, ".config", "ops", "bootstrap", "supabase.json");
 }

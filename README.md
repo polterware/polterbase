@@ -109,38 +109,38 @@ Polterbase keeps generic Supabase execution separate from app-specific automatio
 Use the `app` namespace when you want project-aware workflows:
 
 ```bash
-polterbase app setup uru --path .
+polterbase app setup ops --path .
 ```
 
 ```bash
-polterbase app link uru --path .
+polterbase app link ops --path .
 ```
 
 ```bash
-polterbase app migrate uru push --path .
+polterbase app migrate ops push --path .
 ```
 
 ```bash
-polterbase app configure uru --path .
+polterbase app configure ops --path .
 ```
 
 ```bash
-polterbase app install uru
+polterbase app install ops
 ```
 
 ```bash
-polterbase app update uru
+polterbase app update ops
 ```
 
-`setup uru` installs dependencies, collects Supabase connection data, links the project, pushes migrations, and writes the runtime bootstrap payload used by the desktop app.
+`setup ops` installs dependencies, collects Supabase connection data, links the project, pushes migrations, and writes the runtime bootstrap payload used by the desktop app.
 
-`configure uru` refreshes the runtime connection payload without reinstalling the app.
+`configure ops` refreshes the runtime connection payload without reinstalling the app.
 
-`install uru` is currently macOS-only. By default it resolves the latest GitHub release from `polterware/uru`, accepts `--version <version>` to pin a release, and still supports `--artifact-url` or `POLTERBASE_URU_MACOS_ARTIFACT_URL` as manual overrides.
+`install ops` is currently macOS-only. By default it resolves the latest GitHub release from `polterware/ops`, accepts `--version <version>` to pin a release, and still supports `--artifact-url` or `POLTERBASE_OPS_MACOS_ARTIFACT_URL` as manual overrides.
 
-`update uru` is also macOS-only. It replaces the installed `uru.app` with a newer release while preserving the persisted runtime configuration, local settings, and Supabase session state stored outside the app bundle.
+`update ops` is also macOS-only. It replaces the installed `ops.app` with a newer release while preserving the persisted runtime configuration, local settings, and Supabase session state stored outside the app bundle.
 
-Use `POLTERBASE_URU_GITHUB_REPO=owner/repo` when you need to resolve releases from a fork or a different repository.
+Use `POLTERBASE_OPS_GITHUB_REPO=owner/repo` when you need to resolve releases from a fork or a different repository.
 
 ### Execution Model
 
@@ -260,34 +260,34 @@ Pins are persisted locally using OS-level app config storage.
 
 ## Usage Examples
 
-### Bootstrap Uru from source
+### Bootstrap Ops from source
 
 ```bash
-polterbase app setup uru --path /absolute/path/to/uru
+polterbase app setup ops --path /absolute/path/to/ops
 ```
 
-### Reconfigure an installed Uru app
+### Reconfigure an installed Ops app
 
 ```bash
-polterbase app configure uru
+polterbase app configure ops
 ```
 
-### Install the latest released Uru app
+### Install the latest released Ops app
 
 ```bash
-polterbase app install uru
+polterbase app install ops
 ```
 
 Install a specific release:
 
 ```bash
-polterbase app install uru --version 1.0.0
+polterbase app install ops --version 1.0.0
 ```
 
 Update an existing installation without re-running runtime configuration:
 
 ```bash
-polterbase app update uru
+polterbase app update ops
 ```
 
 ### Check Supabase CLI version

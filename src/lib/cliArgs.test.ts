@@ -7,9 +7,9 @@ describe("parseCliArgs", () => {
       parseCliArgs([
         "app",
         "setup",
-        "polterstore",
+        "ops",
         "--path",
-        "/tmp/polterstore",
+        "/tmp/ops",
         "--yes",
         "--create-project",
       ]),
@@ -17,8 +17,8 @@ describe("parseCliArgs", () => {
       mode: "app",
       options: {
         action: "setup",
-        app: "polterstore",
-        path: "/tmp/polterstore",
+        app: "ops",
+        path: "/tmp/ops",
         yes: true,
         createProject: true,
       },
@@ -30,7 +30,7 @@ describe("parseCliArgs", () => {
       parseCliArgs([
         "app",
         "migrate",
-        "polterstore",
+        "ops",
         "reset",
         "--relink",
       ]),
@@ -38,7 +38,7 @@ describe("parseCliArgs", () => {
       mode: "app",
       options: {
         action: "migrate",
-        app: "polterstore",
+        app: "ops",
         migrationAction: "reset",
         relink: true,
       },
@@ -50,7 +50,7 @@ describe("parseCliArgs", () => {
       parseCliArgs([
         "app",
         "install",
-        "polterstore",
+        "ops",
         "--version",
         "1.2.3",
         "--install-dir",
@@ -60,7 +60,7 @@ describe("parseCliArgs", () => {
       mode: "app",
       options: {
         action: "install",
-        app: "polterstore",
+        app: "ops",
         version: "1.2.3",
         installDir: "/Applications",
       },
@@ -72,7 +72,7 @@ describe("parseCliArgs", () => {
       parseCliArgs([
         "app",
         "update",
-        "polterstore",
+        "ops",
         "--version",
         "1.2.4",
         "--yes",
@@ -81,7 +81,7 @@ describe("parseCliArgs", () => {
       mode: "app",
       options: {
         action: "update",
-        app: "polterstore",
+        app: "ops",
         version: "1.2.4",
         yes: true,
       },

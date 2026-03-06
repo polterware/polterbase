@@ -3,8 +3,8 @@ import { mkdtemp, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import pc from "picocolors";
-import { getPolterstoreBootstrapPayloadPath } from "./bootstrapPaths.js";
-import { resolvePolterstoreMacosArtifact } from "./polterstoreRelease.js";
+import { getOpsBootstrapPayloadPath } from "./bootstrapPaths.js";
+import { resolveOpsMacosArtifact } from "./opsRelease.js";
 import type {
   AppAction,
   AppExecutionContext,
@@ -15,7 +15,7 @@ import { promptConfirm, promptSelect, promptText } from "../lib/prompts.js";
 import { runCommand, runSupabaseCommand } from "../lib/runner.js";
 import { commandExists } from "../lib/system.js";
 
-interface PolterstoreSupabaseConfigInput {
+interface OpsSupabaseConfigInput {
   url: string;
   publishableKey: string;
   projectRef: string;
@@ -23,7 +23,7 @@ interface PolterstoreSupabaseConfigInput {
 
 const LINK_REF_FILE = join("supabase", ".temp", "project-ref");
 
-function isPolterstoreProjectRoot(candidate: string): boolean {
+function isOpsProjectRoot(candidate: string): boolean {
   return (
     existsSync(join(candidate, "src-tauri", "tauri.conf.json")) &&
     existsSync(join(candidate, "supabase", "migrations")) &&
@@ -31,16 +31,16 @@ function isPolterstoreProjectRoot(candidate: string): boolean {
   );
 }
 
-function findNearestPolterstoreRoot(startDir: string): string | undefined {
+function findNearestOpsRoot(startDir: string): string | undefined {
   let currentDir = resolve(startDir);
 
   while (true) {
-    if (isPolterstoreProjectRoot(currentDir)) {
+    if (isOpsProjectRoot(currentDir)) {
       return currentDir;
     }
 
-    const siblingCandidate = join(currentDir, "polterstore");
-    if (isPolterstoreProjectRoot(siblingCandidate)) {
+    const siblingCandidate = join(currentDir, "ops");
+    if (isOpsProjectRoot(siblingCandidate)) {
       return siblingCandidate;
     }
 
@@ -90,7 +90,7 @@ function writeEnvFile(envPath: string, nextEnv: Record<string, string>): void {
 function assertProjectRoot(projectRoot: string | undefined): string {
   if (!projectRoot) {
     throw new Error(
-      "Could not resolve the Polterstore project root. Run from the Polterstore repository or pass --path.",
+      "Could not resolve the Ops project root. Run from the Ops repository or pass --path.",
     );
   }
 
@@ -176,7 +176,7 @@ async function ensureSupabaseLink(
 
 async function collectSupabaseConfig(
   projectRoot?: string,
-): Promise<PolterstoreSupabaseConfigInput> {
+): Promise<OpsSupabaseConfigInput> {
   const envPath = projectRoot ? join(projectRoot, ".env.local") : undefined;
   const currentEnv = envPath ? readEnvFile(envPath) : {};
   const currentRef = projectRoot ? getLinkedProjectRef(projectRoot) : null;
@@ -201,7 +201,7 @@ async function collectSupabaseConfig(
   };
 }
 
-function writePolterstoreEnv(projectRoot: string, config: PolterstoreSupabaseConfigInput): void {
+function writeOpsEnv(projectRoot: string, config: OpsSupabaseConfigInput): void {
   const envPath = join(projectRoot, ".env.local");
   const currentEnv = readEnvFile(envPath);
   const nextEnv = {
@@ -213,8 +213,8 @@ function writePolterstoreEnv(projectRoot: string, config: PolterstoreSupabaseCon
   writeEnvFile(envPath, nextEnv);
 }
 
-function writeBootstrapPayload(config: PolterstoreSupabaseConfigInput): string {
-  const payloadPath = getPolterstoreBootstrapPayloadPath();
+function writeBootstrapPayload(config: OpsSupabaseConfigInput): string {
+  const payloadPath = getOpsBootstrapPayloadPath();
   mkdirSync(dirname(payloadPath), { recursive: true });
   writeFileSync(
     payloadPath,
@@ -245,7 +245,7 @@ async function promptProjectMode(
   }
 
   const selected = await promptSelect(
-    "How should Polterbase prepare Supabase for Polterstore?",
+    "How should Polterbase prepare Supabase for Ops?",
     [
       { value: "existing", label: "Use an existing Supabase project" },
       { value: "create", label: "Create a new Supabase project first" },
@@ -273,7 +273,7 @@ async function runSetup(context: AppExecutionContext): Promise<number> {
   }
 
   const config = await collectSupabaseConfig(projectRoot);
-  writePolterstoreEnv(projectRoot, config);
+  writeOpsEnv(projectRoot, config);
   process.stdout.write(`${pc.green("Saved .env.local")}\n`);
 
   process.stdout.write(`${pc.dim("Installing project dependencies...")}\n`);
@@ -336,7 +336,7 @@ async function runMigration(
       await runSupabaseOrThrow(
         ["db", "lint", "--linked"],
         projectRoot,
-        "Migration lint failed.",
+        "Migration lint completed.",
       );
       process.stdout.write(`${pc.green("Migration lint completed")}\n`);
       return 0;
@@ -367,7 +367,7 @@ async function runConfigure(context: AppExecutionContext): Promise<number> {
   const config = await collectSupabaseConfig(projectRoot);
 
   if (projectRoot) {
-    writePolterstoreEnv(projectRoot, config);
+    writeOpsEnv(projectRoot, config);
     process.stdout.write(`${pc.green("Updated .env.local")}\n`);
   }
 
@@ -445,9 +445,9 @@ async function deployMacosApp(
   context: AppExecutionContext,
   options: DeployMacosAppOptions,
 ): Promise<number> {
-  const artifact = await resolvePolterstoreMacosArtifact(context.options);
+  const artifact = await resolveOpsMacosArtifact(context.options);
 
-  const tempRoot = await mkdtemp(join(tmpdir(), "polterbase-polterstore-"));
+  const tempRoot = await mkdtemp(join(tmpdir(), "polterbase-ops-"));
   const archivePath = join(tempRoot, artifact.fileName);
   const extractDir = join(tempRoot, "extract");
   mkdirSync(extractDir, { recursive: true });
@@ -461,7 +461,7 @@ async function deployMacosApp(
     process.stdout.write(`${pc.dim(`Using explicit artifact URL: ${artifact.url}`)}\n`);
   }
 
-  process.stdout.write(`${pc.dim("Downloading Polterstore macOS artifact...")}\n`);
+  process.stdout.write(`${pc.dim("Downloading Ops macOS artifact...")}\n`);
   const downloadedSize = await downloadFile(artifact.url, archivePath);
   if (artifact.size && downloadedSize !== artifact.size) {
     throw new Error(
@@ -479,11 +479,11 @@ async function deployMacosApp(
 
   const installDir = context.options.installDir ?? "/Applications";
   mkdirSync(installDir, { recursive: true });
-  const destination = join(installDir, "polterstore.app");
+  const destination = join(installDir, "ops.app");
 
   if (options.requireExistingInstallation && !existsSync(destination)) {
     throw new Error(
-      `No existing Polterstore installation was found at ${destination}. Run \`polterbase app install polterstore\` first.`,
+      `No existing Ops installation was found at ${destination}. Run \`polterbase app install ops\` first.`,
     );
   }
 
@@ -507,7 +507,7 @@ async function deployMacosApp(
     "App copy failed.",
   );
   process.stdout.write(
-    `${pc.green(`${options.mode === "install" ? "Installed" : "Updated"} Polterstore at ${destination}`)}\n`,
+    `${pc.green(`${options.mode === "install" ? "Installed" : "Updated"} Ops at ${destination}`)}\n`,
   );
 
   if (options.configureAfterCopy) {
@@ -519,9 +519,9 @@ async function deployMacosApp(
   }
 
   const shouldOpen =
-    context.options.yes || (await promptConfirm("Open Polterstore now?", true));
+    context.options.yes || (await promptConfirm("Open Ops now?", true));
   if (shouldOpen) {
-    await runOrThrow("open", ["-a", destination], process.cwd(), "Unable to open Polterstore.");
+    await runOrThrow("open", ["-a", destination], process.cwd(), "Unable to open Ops.");
   }
 
   return 0;
@@ -543,23 +543,23 @@ async function updateMacosApp(context: AppExecutionContext): Promise<number> {
   });
 }
 
-export const polterstoreProfile: AppProfile = {
-  id: "polterstore",
-  displayName: "Polterstore",
+export const opsProfile: AppProfile = {
+  id: "ops",
+  displayName: "Ops",
   detect(startDir = process.cwd()) {
-    return findNearestPolterstoreRoot(startDir);
+    return findNearestOpsRoot(startDir);
   },
   resolveProjectRoot(startDir = process.cwd(), explicitPath?: string) {
     if (explicitPath) {
       const resolved = resolve(explicitPath);
-      if (isPolterstoreProjectRoot(resolved)) {
+      if (isOpsProjectRoot(resolved)) {
         return resolved;
       }
 
-      return findNearestPolterstoreRoot(resolved);
+      return findNearestOpsRoot(resolved);
     }
 
-    return findNearestPolterstoreRoot(startDir);
+    return findNearestOpsRoot(startDir);
   },
   async run(action: AppAction, context: AppExecutionContext) {
     switch (action) {

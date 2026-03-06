@@ -1,7 +1,7 @@
 import type { AppProfile } from "./types.js";
-import { polterstoreProfile } from "./polterstore.js";
+import { opsProfile } from "./ops.js";
 
-const profiles = [polterstoreProfile];
+const profiles = [opsProfile];
 
 export function getAppProfile(appId: string): AppProfile | undefined {
   return profiles.find((profile) => profile.id === appId);
