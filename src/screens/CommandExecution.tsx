@@ -6,6 +6,7 @@ import { ConfirmPrompt } from "../components/ConfirmPrompt.js";
 import { ToolBadge } from "../components/ToolBadge.js";
 import { Divider } from "../components/Divider.js";
 import { StatusBar } from "../components/StatusBar.js";
+import { CommandOutput } from "../components/CommandOutput.js";
 import { useCommand } from "../hooks/useCommand.js";
 import { isPinnedRun, togglePinnedRun } from "../data/pins.js";
 import { openInBrowser, copyToClipboard } from "../lib/clipboard.js";
@@ -43,7 +44,9 @@ export function CommandExecution({
   const [phase, setPhase] = useState<Phase>("confirm");
   const [currentArgs, setCurrentArgs] = useState(initialArgs);
   const [pinMessage, setPinMessage] = useState<string>();
-  const { status, result, run, reset } = useCommand(tool);
+  const { status, result, run, reset } = useCommand(tool, process.cwd(), {
+    quiet: panelMode,
+  });
 
   const cmdDisplay = `${tool} ${currentArgs.join(" ")}`;
   const runCommand = currentArgs.join(" ");
@@ -68,8 +71,14 @@ export function CommandExecution({
   }, [phase, runCommand, status]);
 
   if (phase === "confirm") {
-    return (
-      <Box flexDirection="column" paddingX={panelMode ? 1 : 0}>
+    const confirmContent = (
+      <Box flexDirection="column">
+        <Box marginBottom={1} gap={1}>
+          <Text color={inkColors.accent} bold>
+            {"▶"} {cmdDisplay}
+          </Text>
+          <ToolBadge tool={tool} />
+        </Box>
         <ConfirmPrompt
           message={`Execute ${cmdDisplay}?`}
           defaultValue={true}
@@ -86,6 +95,24 @@ export function CommandExecution({
         />
       </Box>
     );
+
+    return (
+      <Box flexDirection="column" paddingX={panelMode ? 1 : 0}>
+        {panelMode ? (
+          <Box
+            flexDirection="column"
+            borderStyle="round"
+            borderColor={inkColors.accent}
+            borderDimColor
+            paddingX={1}
+          >
+            {confirmContent}
+          </Box>
+        ) : (
+          confirmContent
+        )}
+      </Box>
+    );
   }
 
   if (phase === "running") {
@@ -94,7 +121,7 @@ export function CommandExecution({
         <Divider width={panelMode ? width - 4 : width} />
         <Box marginY={1} gap={1}>
           <Text color={inkColors.accent} bold>
-            ▶
+            {"▶"}
           </Text>
           <Text dimColor>Running:</Text>
           <Text>{cmdDisplay}</Text>
@@ -114,7 +141,7 @@ export function CommandExecution({
         <Divider width={panelMode ? width - 4 : width} />
         <Box marginY={1} gap={1}>
           <Text color={inkColors.accent} bold>
-            ✓
+            {"✓"}
           </Text>
           <Text color={inkColors.accent} bold>
             Command completed successfully!
@@ -140,16 +167,19 @@ export function CommandExecution({
   }
 
   if (phase === "success") {
-    const successItems = panelMode
-      ? []
-      : [{ value: "__back__", label: "← Back to menu" }];
+    const successItems: SelectItem[] = [
+      { value: "__back__", label: "\u2190 Back to menu" },
+    ];
+
+    // Reserve lines for: divider(1) + success msg(1) + margins(2) + pin msg(1?) + back item box(~5)
+    const outputHeight = Math.max(3, height - 12);
 
     return (
       <Box flexDirection="column" paddingX={panelMode ? 1 : 0}>
         <Divider width={panelMode ? width - 4 : width} />
         <Box marginY={1} gap={1}>
           <Text color={inkColors.accent} bold>
-            ✓
+            {"✓"}
           </Text>
           <Text color={inkColors.accent} bold>
             Command completed successfully!
@@ -162,18 +192,23 @@ export function CommandExecution({
           </Box>
         )}
 
-        {successItems.length > 0 && (
-          <SelectList
-            items={successItems}
-            onSelect={onBack}
-            onCancel={onBack}
-            width={panelMode ? Math.max(20, width - 4) : width}
-            maxVisible={panelMode ? Math.max(6, height - 6) : undefined}
-            isInputActive={isInputActive}
-            arrowNavigation={panelMode}
-            boxedSections={panelMode}
-          />
-        )}
+        <CommandOutput
+          stdout={result?.stdout}
+          stderr={result?.stderr}
+          height={outputHeight}
+          isActive={isInputActive}
+        />
+
+        <SelectList
+          items={successItems}
+          onSelect={onBack}
+          onCancel={onBack}
+          width={panelMode ? Math.max(20, width - 4) : width}
+          maxVisible={panelMode ? Math.max(6, height - 6) : undefined}
+          isInputActive={isInputActive}
+          arrowNavigation={panelMode}
+          boxedSections={panelMode}
+        />
       </Box>
     );
   }
@@ -184,11 +219,11 @@ export function CommandExecution({
   const errorItems: SelectItem[] = [];
 
   if (!result?.spawnError) {
-    errorItems.push({ value: "retry", label: "🔄 Retry the same command" });
+    errorItems.push({ value: "retry", label: "\uD83D\uDD04 Retry the same command" });
     if (!hasDebug) {
       errorItems.push({
         value: "retry-debug",
-        label: "🐛 Retry with --debug",
+        label: "\uD83D\uDC1B Retry with --debug",
         hint: "Append --debug for verbose logs",
       });
     }
@@ -196,12 +231,15 @@ export function CommandExecution({
 
   errorItems.push({
     value: "copy",
-    label: "📋 Copy command to clipboard",
+    label: "\uD83D\uDCCB Copy command to clipboard",
   });
   if (!panelMode) {
-    errorItems.push({ value: "menu", label: "← Return to main menu" });
+    errorItems.push({ value: "menu", label: "\u2190 Return to main menu" });
   }
-  errorItems.push({ value: "exit", label: "🚪 Exit Polter" });
+  errorItems.push({
+    value: panelMode ? "menu" : "exit",
+    label: panelMode ? "\u2190 Back to menu" : "\uD83D\uDEAA Exit Polter",
+  });
 
   return (
     <Box flexDirection="column" paddingX={panelMode ? 1 : 0}>
@@ -211,7 +249,7 @@ export function CommandExecution({
         <Box flexDirection="column" marginY={1}>
           <Box gap={1}>
             <Text color="red" bold>
-              ✗
+              {"✗"}
             </Text>
             <Text color="red" bold>
               Failed to start command
@@ -225,7 +263,7 @@ export function CommandExecution({
             result.spawnError.includes("not found")) && (
               <Box flexDirection="column" marginLeft={2} marginTop={1}>
                 <Text color={inkColors.accent} bold>
-                  💡 {tool} CLI not found in this repository or PATH
+                  {"\uD83D\uDCA1"} {tool} CLI not found in this repository or PATH
                 </Text>
               </Box>
             )}
@@ -234,7 +272,7 @@ export function CommandExecution({
         <Box flexDirection="column" marginY={1}>
           <Box gap={1}>
             <Text color="red" bold>
-              ✗
+              {"✗"}
             </Text>
             <Text color="red">Command failed </Text>
             <Text dimColor>(exit code </Text>
@@ -249,13 +287,20 @@ export function CommandExecution({
           </Box>
           {!hasDebug && (
             <Box marginLeft={2} marginTop={1} gap={1}>
-              <Text dimColor>💡 Tip: retry with</Text>
+              <Text dimColor>{"\uD83D\uDCA1"} Tip: retry with</Text>
               <Text color={inkColors.accent}>--debug</Text>
               <Text dimColor>to see detailed logs</Text>
             </Box>
           )}
         </Box>
       )}
+
+      <CommandOutput
+        stdout={result?.stdout}
+        stderr={result?.stderr}
+        height={Math.max(3, height - 16)}
+        isActive={false}
+      />
 
       <Box marginTop={1} marginBottom={1}>
         <Text bold>What would you like to do?</Text>

@@ -88,7 +88,7 @@ export function Sidebar({
   let flatIdx = 0;
 
   return (
-    <Box flexDirection="column" gap={2}>
+    <Box flexDirection="column" gap={0}>
       {sections.map((section) => {
         const sectionStartIdx = flatIdx;
         const sectionEndIdx = sectionStartIdx + section.items.length - 1;

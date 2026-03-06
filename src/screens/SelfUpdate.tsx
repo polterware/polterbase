@@ -5,6 +5,7 @@ import { Divider } from "../components/Divider.js";
 import { SelectList } from "../components/SelectList.js";
 import { Spinner } from "../components/Spinner.js";
 import { StatusBar } from "../components/StatusBar.js";
+import { CommandOutput } from "../components/CommandOutput.js";
 import { useCommand } from "../hooks/useCommand.js";
 import { findNearestPackageRoot } from "../lib/packageRoot.js";
 import { inkColors } from "../theme.js";
@@ -48,7 +49,9 @@ export function SelfUpdate({
   const updateDisplay = `npm ${updateArgs.join(" ")}`;
   const updateCwd =
     target === "repository" && repositoryRoot ? repositoryRoot : process.cwd();
-  const { status, result, run, reset } = useCommand("npm", updateCwd);
+  const { status, result, run, reset } = useCommand("npm", updateCwd, {
+    quiet: panelMode,
+  });
 
   useEffect(() => {
     if (phase === "running" && status === "idle") {
@@ -206,6 +209,14 @@ export function SelfUpdate({
             <Text dimColor>Repository updated in: {repositoryRoot}</Text>
           )}
         </Box>
+
+        <CommandOutput
+          stdout={result?.stdout}
+          stderr={result?.stderr}
+          height={Math.max(3, height - 12)}
+          isActive={isInputActive}
+        />
+
         <SelectList
           items={successItems}
           onSelect={(value) => {
@@ -275,6 +286,13 @@ export function SelfUpdate({
           </Box>
         </Box>
       )}
+
+      <CommandOutput
+        stdout={result?.stdout}
+        stderr={result?.stderr}
+        height={Math.max(3, height - 16)}
+        isActive={false}
+      />
 
       <Box marginBottom={1} marginLeft={2} flexDirection="column">
         <Text dimColor>Manual fallback:</Text>

@@ -12,6 +12,7 @@ export type CommandStatus = "idle" | "running" | "success" | "error";
 export function useCommand(
   execution: string | CliToolId | CommandExecution = "supabase",
   cwd: string = process.cwd(),
+  options?: { quiet?: boolean },
 ) {
   const [status, setStatus] = useState<CommandStatus>("idle");
   const [result, setResult] = useState<RunResult | null>(null);
@@ -34,7 +35,8 @@ export function useCommand(
       resolvedExecution = execution;
     }
 
-    const res = await runCommand(resolvedExecution, args, cwd);
+    const runOpts = options?.quiet ? { quiet: true } : undefined;
+    const res = await runCommand(resolvedExecution, args, cwd, runOpts);
     setResult(res);
 
     if (res.spawnError || (res.exitCode !== null && res.exitCode !== 0)) {
@@ -44,7 +46,7 @@ export function useCommand(
     }
 
     return res;
-  }, [cwd, execution]);
+  }, [cwd, execution, options?.quiet]);
 
   const reset = useCallback(() => {
     setStatus("idle");

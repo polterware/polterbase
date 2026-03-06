@@ -42,7 +42,7 @@ export function FlagToggle({
       });
     }
 
-    if (key.return) {
+    if (key.return || (arrowNavigation && key.rightArrow)) {
       onSubmit(Array.from(selected));
     }
 

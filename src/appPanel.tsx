@@ -350,6 +350,7 @@ export function AppPanel(): React.ReactElement {
             onNavigate={nav.navigateInner}
             onBack={nav.goBackInner}
             width={w}
+            height={mainContentHeight}
             panelMode
             isInputActive={isActive}
           />

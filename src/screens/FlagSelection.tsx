@@ -1,8 +1,9 @@
 import React from "react";
-import { Box } from "ink";
+import { Box, Text } from "ink";
 import { FlagToggle } from "../components/FlagToggle.js";
 import { StatusBar } from "../components/StatusBar.js";
 import { getFlagsForTool } from "../data/flags.js";
+import { inkColors } from "../theme.js";
 import type { NavigationParams, Screen } from "../hooks/useNavigation.js";
 import type { CliToolId } from "../data/types.js";
 
@@ -12,6 +13,7 @@ interface FlagSelectionProps {
   onNavigate: (screen: Screen, params?: NavigationParams) => void;
   onBack: () => void;
   width?: number;
+  height?: number;
   panelMode?: boolean;
   isInputActive?: boolean;
 }
@@ -22,6 +24,7 @@ export function FlagSelection({
   onNavigate,
   onBack,
   width = 80,
+  height = 24,
   panelMode = false,
   isInputActive = true,
 }: FlagSelectionProps): React.ReactElement {
@@ -33,21 +36,55 @@ export function FlagSelection({
     return <Box />;
   }
 
+  const cmdDisplay = `${tool} ${args.join(" ")}`;
+
   return (
-    <Box flexDirection="column">
-      <FlagToggle
-        flags={flags}
-        onSubmit={(selectedFlags) => {
-          const finalArgs =
-            selectedFlags.length > 0
-              ? [...args, ...selectedFlags]
-              : args;
-          onNavigate("confirm-execute", { args: finalArgs, tool });
-        }}
-        onCancel={onBack}
-        isInputActive={isInputActive}
-        arrowNavigation={panelMode}
-      />
+    <Box flexDirection="column" paddingX={panelMode ? 1 : 0}>
+      {panelMode && (
+        <Box marginBottom={1} gap={1}>
+          <Text color={inkColors.accent} bold>
+            {"▶"} {cmdDisplay}
+          </Text>
+        </Box>
+      )}
+
+      {panelMode ? (
+        <Box
+          flexDirection="column"
+          borderStyle="round"
+          borderColor={inkColors.accent}
+          borderDimColor
+          paddingX={1}
+        >
+          <FlagToggle
+            flags={flags}
+            onSubmit={(selectedFlags) => {
+              const finalArgs =
+                selectedFlags.length > 0
+                  ? [...args, ...selectedFlags]
+                  : args;
+              onNavigate("confirm-execute", { args: finalArgs, tool });
+            }}
+            onCancel={onBack}
+            isInputActive={isInputActive}
+            arrowNavigation={panelMode}
+          />
+        </Box>
+      ) : (
+        <FlagToggle
+          flags={flags}
+          onSubmit={(selectedFlags) => {
+            const finalArgs =
+              selectedFlags.length > 0
+                ? [...args, ...selectedFlags]
+                : args;
+            onNavigate("confirm-execute", { args: finalArgs, tool });
+          }}
+          onCancel={onBack}
+          isInputActive={isInputActive}
+          arrowNavigation={panelMode}
+        />
+      )}
 
       {!panelMode && <StatusBar hint="Space toggle · Enter confirm · Esc back" width={width} />}
     </Box>
