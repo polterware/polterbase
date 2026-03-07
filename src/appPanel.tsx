@@ -32,6 +32,7 @@ import { DeclarativePlan } from "./screens/DeclarativePlan.js";
 import { DeclarativeStatus } from "./screens/DeclarativeStatus.js";
 import { InitScaffold } from "./screens/InitScaffold.js";
 import { ScriptPicker } from "./screens/ScriptPicker.js";
+import { SkillSetup } from "./screens/SkillSetup.js";
 import { getFeatureById } from "./data/features.js";
 import { colors } from "./theme.js";
 import type { PanelNavState } from "./hooks/usePanelNavigation.js";
@@ -55,6 +56,7 @@ const screenLabels: Record<string, string> = {
   "declarative-status": "Status",
   "init-scaffold": "Init",
   "script-picker": "Scripts",
+  "skill-setup": "Skill Setup",
 };
 
 function buildBreadcrumb(nav: PanelNavState): string {
@@ -92,6 +94,9 @@ function buildBreadcrumb(nav: PanelNavState): string {
       break;
     case "declarative":
       base = "\uD83C\uDFD7\uFE0F Infrastructure";
+      break;
+    case "skill-setup":
+      base = "\uD83E\uDDE0 Skill Setup";
       break;
     default:
       base = nav.view;
@@ -210,6 +215,7 @@ export function AppPanel(): React.ReactElement {
       case "processes": return "processes";
       case "scripts": return "scripts";
       case "declarative": return "declarative";
+      case "skill-setup": return "skill-setup";
       default: return nav.featureId;
     }
   })();
@@ -346,6 +352,17 @@ export function AppPanel(): React.ReactElement {
             onBack={focus.focusSidebar}
             width={mainContentWidth - 2}
             height={mainContentHeight}
+            isInputActive={focus.isMainFocused}
+          />
+        );
+
+      case "skill-setup":
+        return (
+          <SkillSetup
+            onBack={focus.focusSidebar}
+            width={mainContentWidth - 2}
+            height={mainContentHeight}
+            panelMode
             isInputActive={focus.isMainFocused}
           />
         );
@@ -589,6 +606,17 @@ export function AppPanel(): React.ReactElement {
         return (
           <ScriptPicker
             onNavigate={nav.navigateInner}
+            onBack={nav.goBackInner}
+            width={w}
+            height={mainContentHeight}
+            panelMode
+            isInputActive={isActive}
+          />
+        );
+
+      case "skill-setup":
+        return (
+          <SkillSetup
             onBack={nav.goBackInner}
             width={w}
             height={mainContentHeight}

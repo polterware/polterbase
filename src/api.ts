@@ -11,7 +11,7 @@ export { resolveToolCommand, getToolInfo, getToolDisplayName, type ToolInfo } fr
 export { detectPkgManager, translateCommand, resolvePkgArgs, type PkgManagerId, type PkgManagerInfo } from "./lib/pkgManager.js";
 
 // Process Manager
-export { startProcess, stopProcess, listProcesses, getProcessOutput, isProcessRunning, removeProcess, generateProcessId, findProcessesByCwd, findRunningByCommand, getSocketPath, type ProcessInfo, type ProcessOutput } from "./lib/processManager.js";
+export { startProcess, stopProcess, listProcesses, getProcessOutput, isProcessRunning, removeProcess, generateProcessId, findProcessesByCwd, findRunningByCommand, registerForegroundProcess, getSocketPath, type ProcessInfo, type ProcessOutput } from "./lib/processManager.js";
 
 // IPC
 export { createIpcServer, type IpcServer } from "./lib/ipcServer.js";
@@ -29,6 +29,9 @@ export { getCurrentStatus } from "./declarative/status.js";
 
 // MCP
 export { getMcpStatusInfo, installMcpServerSilent, removeMcpServerSilent, type McpStatusInfo, type McpActionResult } from "./lib/mcpInstaller.js";
+
+// Skill
+export { setupSkill, setupSkillCli, getSkillContent, getSkillPath, type SkillSetupResult, type SkillSetupStatus } from "./lib/skillSetup.js";
 
 // Types
 export type { CommandDef, Pipeline, PipelineStep, CliToolId, Feature, ProjectConfig, SuggestedArg } from "./data/types.js";

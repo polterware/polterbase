@@ -6,6 +6,7 @@ import { AppPanel } from "./appPanel.js";
 import { parseCliArgs, printCliHelp } from "./lib/cliArgs.js";
 import { runAppCli } from "./apps/runAppCli.js";
 import { installMcpServer, removeMcpServer, mcpStatus } from "./lib/mcpInstaller.js";
+import { setupSkillCli } from "./lib/skillSetup.js";
 import { findPipelineByName } from "./pipeline/storage.js";
 import { executePipeline } from "./pipeline/engine.js";
 import { getCommandById } from "./data/commands/index.js";
@@ -42,6 +43,11 @@ async function main() {
         await mcpStatus();
         break;
     }
+    return;
+  }
+
+  if (parsed.mode === "setup") {
+    setupSkillCli();
     return;
   }
 

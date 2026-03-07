@@ -1,4 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
+import { spawn } from "node:child_process";
 import {
   startProcess,
   stopProcess,
@@ -9,6 +10,7 @@ import {
   generateProcessId,
   findProcessesByCwd,
   findRunningByCommand,
+  registerForegroundProcess,
   _resetForTests,
   createRingBuffer,
   appendToBuffer,
@@ -193,5 +195,57 @@ describe("findRunningByCommand", () => {
 
     const found = findRunningByCommand("/tmp/test-e", "echo", ["done"]);
     expect(found).toBeUndefined();
+  });
+});
+
+describe("registerForegroundProcess", () => {
+  it("registers an externally-spawned child and captures output", async () => {
+    const child = spawn("echo", ["-e", "fg-line1\\nfg-line2"], {
+      shell: true,
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    const info = registerForegroundProcess("fg-test", "echo", ["-e", "fg-line1\\nfg-line2"], process.cwd(), child);
+    expect(info.id).toBe("fg-test");
+    expect(info.status).toBe("running");
+
+    const list = listProcesses();
+    expect(list.some((p) => p.id === "fg-test")).toBe(true);
+
+    await new Promise((r) => setTimeout(r, 500));
+
+    const output = getProcessOutput("fg-test");
+    expect(output.stdoutLineCount).toBeGreaterThan(0);
+    const joined = output.stdout.join("\n");
+    expect(joined).toContain("fg-line1");
+  });
+
+  it("marks process as exited after child exits", async () => {
+    const child = spawn("echo", ["done"], {
+      shell: true,
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    registerForegroundProcess("fg-exit", "echo", ["done"], process.cwd(), child);
+    await new Promise((r) => setTimeout(r, 500));
+
+    const list = listProcesses();
+    const proc = list.find((p) => p.id === "fg-exit");
+    expect(proc).toBeDefined();
+    expect(proc!.status).toBe("exited");
+    expect(proc!.exitCode).toBe(0);
+  });
+
+  it("rejects duplicate running ID", () => {
+    const child1 = spawn("sleep", ["60"], { shell: true, detached: true, stdio: ["ignore", "pipe", "pipe"] });
+    registerForegroundProcess("fg-dup", "sleep", ["60"], process.cwd(), child1);
+
+    const child2 = spawn("echo", ["hi"], { shell: true, detached: true, stdio: ["ignore", "pipe", "pipe"] });
+    expect(() => registerForegroundProcess("fg-dup", "echo", ["hi"], process.cwd(), child2)).toThrow(/already running/);
+
+    // Clean up child2 since it won't be tracked
+    if (child2.pid) try { process.kill(-child2.pid, "SIGKILL"); } catch { /* ignore */ }
   });
 });

@@ -1,6 +1,6 @@
 import type { AppAction, MigrationAction, ParsedCliOptions } from "../apps/types.js";
 
-export type CliMode = "interactive" | "app" | "help" | "pipeline-run" | "config" | "plan" | "apply" | "status" | "mcp";
+export type CliMode = "interactive" | "app" | "help" | "pipeline-run" | "config" | "plan" | "apply" | "status" | "mcp" | "setup";
 
 export type McpScope = "project" | "user" | "local";
 export type McpAction = "install" | "update" | "status" | "remove";
@@ -79,6 +79,10 @@ export function parseCliArgs(argv: string[]): ParsedCliCommand {
 
   if (argv_[0] === "apply") {
     return { mode: "apply", options: {} };
+  }
+
+  if (argv_[0] === "setup") {
+    return { mode: "setup", options: {} };
   }
 
   if (argv_[0] === "status") {
@@ -168,6 +172,7 @@ export function printCliHelp(): void {
       "  polter config --edit             Open config in $EDITOR",
       "  polter plan                      Show declarative state diff",
       "  polter apply                     Apply declarative state changes",
+      "  polter setup                     Install Polter skill for Claude Code",
       "  polter status                    Show current tool status",
       "  polter mcp install               Install Polter MCP server into Claude Code (local scope)",
       "  polter mcp install --project     Install for this project only (shared via repo)",

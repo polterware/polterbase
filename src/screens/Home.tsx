@@ -132,6 +132,9 @@ export function Home({
       case "__action_config__":
         onNavigate("project-config");
         break;
+      case "__action_skill_setup__":
+        onNavigate("skill-setup");
+        break;
       case "__action_update__":
         onNavigate("self-update");
         break;

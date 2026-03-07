@@ -22,6 +22,7 @@ import { DeclarativePlan } from "./screens/DeclarativePlan.js";
 import { DeclarativeStatus } from "./screens/DeclarativeStatus.js";
 import { InitScaffold } from "./screens/InitScaffold.js";
 import { ScriptPicker } from "./screens/ScriptPicker.js";
+import { SkillSetup } from "./screens/SkillSetup.js";
 import { colors } from "./theme.js";
 
 export function AppClassic(): React.ReactElement {
@@ -133,6 +134,9 @@ export function AppClassic(): React.ReactElement {
 
       case "script-picker":
         return <ScriptPicker onNavigate={navigate} onBack={goBack} width={width} height={height} />;
+
+      case "skill-setup":
+        return <SkillSetup onBack={goBack} width={width} height={height} />;
 
       default:
         return (

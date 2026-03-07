@@ -5,6 +5,7 @@ import {
   type RunResult,
 } from "../lib/runner.js";
 import { resolveToolCommand } from "../lib/toolResolver.js";
+import { registerForegroundProcess, generateProcessId } from "../lib/processManager.js";
 import type { CliToolId } from "../data/types.js";
 
 export type CommandStatus = "idle" | "running" | "success" | "error";
@@ -54,6 +55,12 @@ export function useCommand(
     const runOpts = { quiet: options?.quiet, onData };
     const handle = runCommand(resolvedExecution, args, cwd, runOpts);
     abortRef.current = handle.abort;
+
+    const cmdStr = typeof resolvedExecution === "string" ? resolvedExecution : resolvedExecution.command;
+    const processId = generateProcessId(cmdStr, args);
+    try {
+      registerForegroundProcess(processId, cmdStr, args, cwd, handle.child);
+    } catch { /* don't break TUI flow */ }
     const res = await handle.promise;
     abortRef.current = null;
     setResult(res);

@@ -76,4 +76,5 @@ export type Screen =
   | "declarative-plan"
   | "declarative-status"
   | "init-scaffold"
-  | "script-picker";
+  | "script-picker"
+  | "skill-setup";

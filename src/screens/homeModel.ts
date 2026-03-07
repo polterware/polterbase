@@ -207,6 +207,14 @@ export function buildHomeItems({
   });
 
   items.push({
+    id: "action-skill-setup",
+    value: "__action_skill_setup__",
+    label: "Skill Setup",
+    hint: "Install Claude Code skill",
+    kind: "action",
+  });
+
+  items.push({
     id: "action-update",
     value: "__action_update__",
     label: "Update Polter",

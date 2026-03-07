@@ -91,6 +91,7 @@ export function resolveSupabaseCommand(
 export interface RunHandle {
   promise: Promise<RunResult>;
   abort: () => void;
+  child: import("node:child_process").ChildProcess;
 }
 
 export function runCommand(
@@ -153,6 +154,7 @@ export function runCommand(
         try { process.kill(-child.pid, "SIGTERM"); } catch { /* already gone */ }
       }
     },
+    child,
   };
 }
 

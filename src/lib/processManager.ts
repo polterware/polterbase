@@ -182,6 +182,61 @@ export function startProcess(
   return toProcessInfo(tracked);
 }
 
+export function registerForegroundProcess(
+  id: string,
+  command: string,
+  args: string[],
+  cwd: string,
+  child: ChildProcess,
+): ProcessInfo {
+  const existing = registry.get(id);
+  if (existing && existing.status === "running") {
+    throw new Error(`Process "${id}" is already running (pid ${existing.child.pid})`);
+  }
+
+  registerCleanup();
+
+  const tracked: TrackedProcess = {
+    id,
+    command,
+    args,
+    cwd,
+    child,
+    status: "running",
+    exitCode: null,
+    signal: null,
+    startedAt: new Date(),
+    exitedAt: null,
+    stdout: createRingBuffer(),
+    stderr: createRingBuffer(),
+  };
+
+  child.stdout?.on("data", (data: Buffer) => {
+    appendToBuffer(tracked.stdout, data.toString());
+  });
+
+  child.stderr?.on("data", (data: Buffer) => {
+    appendToBuffer(tracked.stderr, data.toString());
+  });
+
+  child.on("exit", (code, signal) => {
+    tracked.status = "exited";
+    tracked.exitCode = code;
+    tracked.signal = signal;
+    tracked.exitedAt = new Date();
+  });
+
+  child.on("error", (err) => {
+    tracked.status = "errored";
+    tracked.exitedAt = new Date();
+    appendToBuffer(tracked.stderr, `spawn error: ${err.message}\n`);
+  });
+
+  registry.set(id, tracked);
+
+  return toProcessInfo(tracked);
+}
+
 export function stopProcess(id: string): Promise<ProcessInfo> {
   const proc = registry.get(id);
   if (!proc) throw new Error(`No tracked process with id "${id}"`);

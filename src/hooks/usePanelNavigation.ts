@@ -12,7 +12,8 @@ export type PanelView =
   | "custom-command"
   | "processes"
   | "scripts"
-  | "declarative";
+  | "declarative"
+  | "skill-setup";
 
 export interface PanelNavState {
   view: PanelView;
@@ -58,6 +59,7 @@ export function usePanelNavigation() {
       processes: "processes",
       scripts: "scripts",
       declarative: "declarative",
+      "skill-setup": "skill-setup",
     };
 
     const view = viewMap[itemId];
