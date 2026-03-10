@@ -33,13 +33,13 @@ export function SelfUpdate({
   isInputActive = true,
 }: SelfUpdateProps): React.ReactElement {
   const [phase, setPhase] = useState<Phase>("confirm");
-  const { status, result, run, reset } = useCommand("bash", process.cwd(), {
+  const { status, result, run, reset } = useCommand("curl", process.cwd(), {
     quiet: panelMode,
   });
 
   useEffect(() => {
     if (phase === "running" && status === "idle") {
-      run(["-c", `curl ${updateArgs.join(" ")} | bash`]);
+      run([...updateArgs, "|", "bash"]);
     }
   }, [phase, run, status]);
 

@@ -41,6 +41,22 @@ curl -fsSL https://raw.githubusercontent.com/polterware/polter/main/install.sh |
 
 You can also update from inside Polter via **Actions > Update Polter**.
 
+### Uninstall
+
+Remove Polter binaries and clean up:
+
+```bash
+polter uninstall
+```
+
+Or run the uninstall script directly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/polterware/polter/main/uninstall.sh | bash
+```
+
+This removes `polter` and `polter-mcp` from `~/.polter/bin/`. Remember to remove the PATH entry from your shell profile afterwards.
+
 ---
 
 ## Requirements

@@ -174,6 +174,55 @@ async function main() {
     }
   }
 
+  if (parsed.mode === "uninstall") {
+    const { join } = await import("path");
+    const { homedir } = await import("os");
+
+    const uninstallDir = join(homedir(), ".polter", "bin");
+
+    process.stdout.write(pc.bold("Polter Uninstaller\n\n"));
+
+    let removed = 0;
+    const { existsSync, unlinkSync, readdirSync, rmdirSync } = await import("fs");
+
+    const polterBin = join(uninstallDir, "polter");
+    if (existsSync(polterBin)) {
+      unlinkSync(polterBin);
+      process.stdout.write(`  Removed ${polterBin}\n`);
+      removed++;
+    }
+
+    const mcpBin = join(uninstallDir, "polter-mcp");
+    if (existsSync(mcpBin)) {
+      unlinkSync(mcpBin);
+      process.stdout.write(`  Removed ${mcpBin}\n`);
+      removed++;
+    }
+
+    if (removed === 0) {
+      process.stdout.write(`  No Polter binaries found in ${uninstallDir}\n`);
+    }
+
+    // Remove bin dir if empty
+    if (existsSync(uninstallDir) && readdirSync(uninstallDir).length === 0) {
+      rmdirSync(uninstallDir);
+      process.stdout.write(`  Removed empty directory ${uninstallDir}\n`);
+    }
+
+    // Remove .polter dir if empty
+    const polterHome = join(homedir(), ".polter");
+    if (existsSync(polterHome) && readdirSync(polterHome).length === 0) {
+      rmdirSync(polterHome);
+      process.stdout.write(`  Removed empty directory ${polterHome}\n`);
+    }
+
+    process.stdout.write(pc.green("\nPolter has been uninstalled.\n\n"));
+    process.stdout.write("If you added Polter to your PATH, remove this line from your shell profile:\n\n");
+    process.stdout.write(`  export PATH="${uninstallDir}:$PATH"\n\n`);
+    process.stdout.write("Then restart your terminal or run: source ~/.bashrc  # or ~/.zshrc\n");
+    return;
+  }
+
   // TUI mode — only load React/Ink when actually needed
   const React = (await import("react")).default;
   const { render } = await import("ink");

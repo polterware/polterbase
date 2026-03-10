@@ -1,4 +1,4 @@
-export type CliMode = "interactive" | "help" | "pipeline-run" | "config" | "plan" | "apply" | "status" | "mcp" | "setup";
+export type CliMode = "interactive" | "help" | "pipeline-run" | "config" | "plan" | "apply" | "status" | "mcp" | "setup" | "uninstall";
 
 export type McpScope = "project" | "user" | "local";
 export type McpAction = "install" | "update" | "status" | "remove";
@@ -66,6 +66,10 @@ export function parseCliArgs(argv: string[]): ParsedCliCommand {
     return { mode: "status" };
   }
 
+  if (argv_[0] === "uninstall") {
+    return { mode: "uninstall" };
+  }
+
   return { mode: "interactive", classic };
 }
 
@@ -89,6 +93,7 @@ export function printCliHelp(): void {
       "  polter mcp update                Update MCP server to latest version",
       "  polter mcp status                Show MCP registration and version info",
       "  polter mcp remove                Remove MCP server registration",
+      "  polter uninstall                 Remove Polter binaries from ~/.polter/bin",
       "",
       "Options:",
       "  --classic                        Use classic single-screen UI",
